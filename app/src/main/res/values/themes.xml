@@ -1,0 +1,28 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Base.Theme.VitaSense" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/vs_primary_700</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/vs_primary_500</item>
+        <item name="colorSurface">@color/vs_surface</item>
+        <item name="android:windowBackground">@color/vs_background</item>
+        <item name="colorOutline">@color/vs_border_soft</item>
+        <item name="android:textColorPrimary">@color/vs_text_primary</item>
+        <item name="android:textColorSecondary">@color/vs_text_secondary</item>
+        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.VitaSense.Medium</item>
+        <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.VitaSense.Large</item>
+    </style>
+
+    <style name="Theme.VitaSense" parent="Base.Theme.VitaSense" />
+
+    <style name="ShapeAppearance.VitaSense.Medium" parent="ShapeAppearance.Material3.MediumComponent">
+        <item name="cornerSize">16dp</item>
+    </style>
+
+    <style name="ShapeAppearance.VitaSense.Large" parent="ShapeAppearance.Material3.LargeComponent">
+        <item name="cornerSize">24dp</item>
+    </style>
+
+    <style name="Widget.VitaSense.BottomNavigation.ActiveIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">@color/vs_primary_100</item>
+    </style>
+</resources>

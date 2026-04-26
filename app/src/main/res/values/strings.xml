@@ -1,0 +1,106 @@
+<resources>
+    <string name="app_name">VitaSense</string>
+
+    <string name="nav_dashboard">Home</string>
+    <string name="nav_trends">Trends</string>
+    <string name="nav_assessment">Assessment</string>
+    <string name="nav_mood">Mood</string>
+    <string name="nav_settings">Settings</string>
+
+    <string name="dashboard_placeholder">VitaSense is preparing your view for today.</string>
+    <string name="trends_placeholder">This page will show changes across the last 7 and 30 days.</string>
+    <string name="assessment_placeholder">This page will show the score, risk level, and explanation.</string>
+    <string name="mood_placeholder">This page will support adding, filtering, and deleting history.</string>
+    <string name="settings_placeholder">This page will provide theme controls and demo import tools.</string>
+
+    <string name="theme_light">Light Mode</string>
+    <string name="theme_dark">Dark Mode</string>
+
+    <string name="dashboard_title">Today\'s Status</string>
+    <string name="dashboard_score_label">Health Assessment Score</string>
+    <string name="latest_heart_rate">Latest Heart Rate</string>
+    <string name="resting_heart_rate">Resting Heart Rate</string>
+    <string name="sleep_duration">Sleep Duration</string>
+    <string name="hrv_label">HRV (RMSSD)</string>
+    <string name="dashboard_empty_hint">No data yet. Import a demo dataset from Settings to get started.</string>
+    <string name="dashboard_anomaly_title">Alerts</string>
+    <string name="dashboard_quick_mood">Quick Mood Log</string>
+
+    <string name="trends_title">Trend Review</string>
+    <string name="trends_range_7">7 Days</string>
+    <string name="trends_range_30">30 Days</string>
+    <string name="trends_empty_hint">No trend data is available for this range yet. Import sample data and this view will refresh automatically.</string>
+    <string name="trends_latest_date">Latest date: %1$s</string>
+    <string name="trends_sleep_title">Sleep Trend</string>
+    <string name="trends_hrv_title">HRV Trend</string>
+    <string name="trends_anomaly_title">Anomaly Trend</string>
+    <string name="trends_heart_rate_title">Average Heart Rate Trend</string>
+    <string name="trends_week_signals_title">Recent Signals</string>
+    <string name="trends_week_signals_caption">Use three mini trends to compare recent HRV, heart rate, and sleep changes.</string>
+    <string name="trends_week_stories_title">Daily Status Cards</string>
+    <string name="trends_week_stories_caption">Review sleep, HRV, heart rate, anomalies, and recovery day by day.</string>
+    <string name="trends_month_chart_title">30-Day Main Trend</string>
+    <string name="trends_month_chart_caption">Track sleep, HRV, and heart rate together across the last month, with anomaly days called out visually.</string>
+    <string name="trends_month_weekly_title">Weekly Snapshot Comparison</string>
+    <string name="trends_month_weekly_caption">Compress 30 days into 4 or 5 slices to compare which week changed the most.</string>
+    <string name="trends_month_heatmap_title">Recovery Heatmap</string>
+    <string name="trends_month_heatmap_caption">Darker cells indicate stronger recovery, and the corner marker flags anomaly days.</string>
+    <string name="trends_month_insights_title">Trend Insights</string>
+    <string name="trends_month_insights_caption">Condense the last 30 days into the three most important takeaways.</string>
+    <string name="trends_week_avg_hr">Average Heart Rate</string>
+    <string name="trends_week_resting_hr">Resting Heart Rate</string>
+    <string name="trends_week_heart_rate_short">Heart Rate</string>
+    <string name="trends_week_sleep_short">Sleep</string>
+    <string name="trends_direction_up">Trending Up</string>
+    <string name="trends_direction_down">Pulling Back</string>
+    <string name="trends_direction_stable">Stable Overall</string>
+
+    <string name="assessment_title">Health Assessment</string>
+    <string name="assessment_score">Total Score</string>
+    <string name="assessment_breakdown">Score Breakdown</string>
+    <string name="assessment_reason">Why This Result</string>
+    <string name="assessment_suggestion">Suggested Action</string>
+    <string name="assessment_empty_hint">Import data to view the score, risk level, and explanation.</string>
+
+    <string name="mood_title">Mood Log</string>
+    <string name="mood_add_section">Add Entry</string>
+    <string name="mood_record_date">Entry Date</string>
+    <string name="mood_date_hint">For example, 2026-04-24</string>
+    <string name="mood_note">Note</string>
+    <string name="mood_note_hint">Write down today\'s trigger, event, or feeling.</string>
+    <string name="mood_note_helper">Write down today\'s trigger, event, or feeling.</string>
+    <string name="mood_save">Save Mood</string>
+    <string name="mood_filter_section">Filters</string>
+    <string name="mood_filter_all">All</string>
+    <string name="mood_filter_positive">Positive</string>
+    <string name="mood_filter_negative">Negative</string>
+    <string name="mood_filter_start_date">Start Date</string>
+    <string name="mood_filter_end_date">End Date</string>
+    <string name="mood_filter_apply">Apply Filters</string>
+    <string name="mood_filter_clear">Clear Filters</string>
+    <string name="mood_history_title">History</string>
+    <string name="mood_empty_hint">No mood records match the current filters.</string>
+    <string name="mood_option_calm">Calm</string>
+    <string name="mood_option_happy">Happy</string>
+    <string name="mood_option_relaxed">Relaxed</string>
+    <string name="mood_option_anxious">Anxious</string>
+    <string name="mood_option_low">Low</string>
+    <string name="mood_option_tired">Tired</string>
+    <string name="mood_pick_record_date_title">Select Entry Date</string>
+    <string name="mood_pick_start_date_title">Select Start Date</string>
+    <string name="mood_pick_end_date_title">Select End Date</string>
+
+    <string name="settings_title">Settings &amp; Import</string>
+    <string name="settings_theme_section">Theme</string>
+    <string name="settings_import_section">Import Demo Data</string>
+    <string name="settings_clear_all_data">Delete All Data</string>
+    <string name="settings_clear_all_message">Delete all local data?</string>
+    <string name="settings_data_section">About the Data</string>
+    <string name="settings_data_note">Imported samples are for course demos and local debugging only. Nothing is uploaded to the cloud. After import, the Home, Trends, and Assessment pages refresh automatically.</string>
+    <string name="settings_privacy_section">Privacy</string>
+    <string name="settings_privacy_note">All records are stored in the local database on this device. The app has no account system and does not sync heart rate, sleep, or mood data to external services.</string>
+    <string name="settings_disclaimer">This app supports health trend review and stress management, and is not a medical diagnosis tool.</string>
+
+    <string name="common_delete">Delete</string>
+    <string name="common_cancel">Cancel</string>
+</resources>

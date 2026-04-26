@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main_nav_graph"
+    app:startDestination="@id/dashboardFragment">
+
+    <fragment
+        android:id="@+id/dashboardFragment"
+        android:name="org.wit.vitasense.ui.dashboard.DashboardFragment"
+        android:label="@string/nav_dashboard" />
+
+    <fragment
+        android:id="@+id/trendsFragment"
+        android:name="org.wit.vitasense.ui.trends.TrendsFragment"
+        android:label="@string/nav_trends" />
+
+    <fragment
+        android:id="@+id/assessmentFragment"
+        android:name="org.wit.vitasense.ui.assessment.AssessmentFragment"
+        android:label="@string/nav_assessment" />
+
+    <fragment
+        android:id="@+id/moodFragment"
+        android:name="org.wit.vitasense.ui.mood.MoodFragment"
+        android:label="@string/nav_mood" />
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="org.wit.vitasense.ui.settings.SettingsFragment"
+        android:label="@string/nav_settings" />
+</navigation>

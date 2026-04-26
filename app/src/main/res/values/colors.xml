@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="vs_primary_900">#7A4B34</color>
+    <color name="vs_primary_700">#A66442</color>
+    <color name="vs_primary_500">#C98963</color>
+    <color name="vs_primary_300">#E3B394</color>
+    <color name="vs_primary_200">#F0D0BC</color>
+    <color name="vs_primary_100">#FAECE2</color>
+    <color name="vs_primary_50">#FFF8F3</color>
+    <color name="vs_alert_red">#D45A4A</color>
+    <color name="vs_background">#FFF9F5</color>
+    <color name="vs_surface">#FFFDFC</color>
+    <color name="vs_surface_alt">#F9F0E9</color>
+    <color name="vs_week_signal_tile">#FAF6F1</color>
+    <color name="vs_week_signal_hrv">#A66442</color>
+    <color name="vs_week_signal_hr">#9E3E2A20</color>
+    <color name="vs_week_signal_sleep">#C59A7F</color>
+    <color name="vs_border_soft">#E9D8CB</color>
+    <color name="vs_text_primary">#3E2A20</color>
+    <color name="vs_text_secondary">#7A6558</color>
+    <color name="vs_text_tertiary">#AD998C</color>
+
+    <color name="vs_dark_primary_900">#FFE8DB</color>
+    <color name="vs_dark_primary_700">#F2C8AE</color>
+    <color name="vs_dark_primary_500">#D79B73</color>
+    <color name="vs_dark_primary_400">#B87E57</color>
+    <color name="vs_dark_primary_300">#8A5D42</color>
+    <color name="vs_dark_primary_200">#64432F</color>
+    <color name="vs_dark_primary_100">#412B1F</color>
+    <color name="vs_alert_red_dark">#FF8E85</color>
+    <color name="vs_dark_background">#1A120E</color>
+    <color name="vs_dark_surface">#241914</color>
+    <color name="vs_dark_surface_alt">#2D201A</color>
+    <color name="vs_dark_week_signal_tile">#2A1E18</color>
+    <color name="vs_dark_week_signal_hrv">#F2C8AE</color>
+    <color name="vs_dark_week_signal_hr">#C8FFF3EB</color>
+    <color name="vs_dark_week_signal_sleep">#D7A888</color>
+    <color name="vs_dark_border_soft">#4B382E</color>
+    <color name="vs_dark_text_primary">#FFF3EB</color>
+    <color name="vs_dark_text_secondary">#D8C1B4</color>
+    <color name="vs_dark_text_tertiary">#A98F82</color>
+
+</resources>

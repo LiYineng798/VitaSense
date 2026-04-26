@@ -1,0 +1,14 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Base.Theme.VitaSense" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/vs_dark_primary_500</item>
+        <item name="colorOnPrimary">@color/vs_dark_text_primary</item>
+        <item name="colorSecondary">@color/vs_dark_primary_400</item>
+        <item name="colorSurface">@color/vs_dark_surface</item>
+        <item name="android:windowBackground">@color/vs_dark_background</item>
+        <item name="colorOutline">@color/vs_dark_border_soft</item>
+        <item name="android:textColorPrimary">@color/vs_dark_text_primary</item>
+        <item name="android:textColorSecondary">@color/vs_dark_text_secondary</item>
+        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.VitaSense.Medium</item>
+        <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.VitaSense.Large</item>
+    </style>
+</resources>
