@@ -13,12 +13,13 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.viewpager2.widget.ViewPager2
-import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.coroutines.launch
 import org.wit.vitasense.R
 import org.wit.vitasense.VitaSenseApplication
 import org.wit.vitasense.databinding.FragmentDashboardBinding
 import org.wit.vitasense.ui.common.VitaSenseViewModelFactory
+import org.wit.vitasense.ui.navigation.BottomTabDestination
+import org.wit.vitasense.ui.navigation.TopLevelNavigator
 
 class DashboardFragment : Fragment() {
     private var _binding: FragmentDashboardBinding? = null
@@ -72,7 +73,7 @@ class DashboardFragment : Fragment() {
         }
 
         binding.quickMoodButton.setOnClickListener {
-            navigateToBottomDestination(R.id.moodFragment)
+            navigateToBottomDestination(BottomTabDestination.MOOD)
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -143,11 +144,7 @@ class DashboardFragment : Fragment() {
 
     private fun dp(value: Int): Int = (value * requireContext().resources.displayMetrics.density).toInt()
 
-    private fun navigateToBottomDestination(destinationId: Int) {
-        val bottomNav = requireActivity().findViewById<BottomNavigationView>(R.id.bottomNav)
-        if (bottomNav.selectedItemId == destinationId) {
-            return
-        }
-        bottomNav.selectedItemId = destinationId
+    private fun navigateToBottomDestination(destination: BottomTabDestination) {
+        (requireActivity() as TopLevelNavigator).navigateToBottomDestination(destination)
     }
 }

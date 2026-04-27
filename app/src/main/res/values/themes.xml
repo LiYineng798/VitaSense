@@ -21,8 +21,4 @@
     <style name="ShapeAppearance.VitaSense.Large" parent="ShapeAppearance.Material3.LargeComponent">
         <item name="cornerSize">24dp</item>
     </style>
-
-    <style name="Widget.VitaSense.BottomNavigation.ActiveIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
-        <item name="android:color">@color/vs_primary_100</item>
-    </style>
 </resources>

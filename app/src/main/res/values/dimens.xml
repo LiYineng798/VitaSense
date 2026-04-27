@@ -1,3 +1,9 @@
 <resources>
     <dimen name="vs_trend_chart_height">160dp</dimen>
+    <dimen name="vs_bottom_tab_board_radius">32dp</dimen>
+    <dimen name="vs_bottom_tab_board_horizontal_padding">8dp</dimen>
+    <dimen name="vs_bottom_tab_board_vertical_padding">8dp</dimen>
+    <dimen name="vs_bottom_tab_item_height">64dp</dimen>
+    <dimen name="vs_bottom_tab_indicator_horizontal_inset">10dp</dimen>
+    <dimen name="vs_bottom_tab_indicator_vertical_inset">7dp</dimen>
 </resources>

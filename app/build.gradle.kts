@@ -57,11 +57,9 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     implementation(libs.json)
     testImplementation(libs.junit)
-    testImplementation(libs.androidx.room.testing)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.json)
     androidTestImplementation(libs.androidx.test.core)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(libs.androidx.room.testing)
 }

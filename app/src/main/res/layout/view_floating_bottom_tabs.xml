@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/floatingBottomTabsCard"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@android:color/transparent"
+    android:contentDescription="@null"
+    app:cardBackgroundColor="@android:color/transparent"
+    app:cardCornerRadius="@dimen/vs_bottom_tab_board_radius"
+    app:cardElevation="10dp"
+    app:strokeWidth="0dp">
+
+    <FrameLayout
+        android:id="@+id/floatingBottomTabsBoard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_floating_tab_bar"
+        android:paddingStart="@dimen/vs_bottom_tab_board_horizontal_padding"
+        android:paddingTop="@dimen/vs_bottom_tab_board_vertical_padding"
+        android:paddingEnd="@dimen/vs_bottom_tab_board_horizontal_padding"
+        android:paddingBottom="@dimen/vs_bottom_tab_board_vertical_padding">
+
+        <org.wit.vitasense.ui.navigation.LiquidTabIndicatorView
+            android:id="@+id/bottomTabIndicator"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/vs_bottom_tab_item_height" />
+
+        <LinearLayout
+            android:id="@+id/layoutTabForeground"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:id="@+id/tabHome"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/vs_bottom_tab_item_height"
+                android:layout_weight="1"
+                android:contentDescription="@string/nav_dashboard"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="8dp">
+
+                <ImageView
+                    android:id="@+id/tabHomeIcon"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@android:drawable/ic_menu_view" />
+
+                <TextView
+                    android:id="@+id/tabHomeLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:autoSizeMaxTextSize="11sp"
+                    android:autoSizeMinTextSize="9sp"
+                    android:autoSizeStepGranularity="1sp"
+                    android:autoSizeTextType="uniform"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:maxLines="1"
+                    android:text="@string/nav_dashboard"
+                    android:textColor="@color/vs_text_secondary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/tabTrends"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/vs_bottom_tab_item_height"
+                android:layout_weight="1"
+                android:contentDescription="@string/nav_trends"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="8dp">
+
+                <ImageView
+                    android:id="@+id/tabTrendsIcon"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@android:drawable/ic_menu_sort_by_size" />
+
+                <TextView
+                    android:id="@+id/tabTrendsLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:autoSizeMaxTextSize="11sp"
+                    android:autoSizeMinTextSize="9sp"
+                    android:autoSizeStepGranularity="1sp"
+                    android:autoSizeTextType="uniform"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:maxLines="1"
+                    android:text="@string/nav_trends"
+                    android:textColor="@color/vs_text_secondary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/tabAssessment"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/vs_bottom_tab_item_height"
+                android:layout_weight="1"
+                android:contentDescription="@string/nav_assessment"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="8dp">
+
+                <ImageView
+                    android:id="@+id/tabAssessmentIcon"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@android:drawable/ic_menu_info_details" />
+
+                <TextView
+                    android:id="@+id/tabAssessmentLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:autoSizeMaxTextSize="11sp"
+                    android:autoSizeMinTextSize="9sp"
+                    android:autoSizeStepGranularity="1sp"
+                    android:autoSizeTextType="uniform"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:maxLines="1"
+                    android:text="@string/nav_assessment"
+                    android:textColor="@color/vs_text_secondary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/tabMood"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/vs_bottom_tab_item_height"
+                android:layout_weight="1"
+                android:contentDescription="@string/nav_mood"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="8dp">
+
+                <ImageView
+                    android:id="@+id/tabMoodIcon"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@android:drawable/ic_menu_edit" />
+
+                <TextView
+                    android:id="@+id/tabMoodLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:autoSizeMaxTextSize="11sp"
+                    android:autoSizeMinTextSize="9sp"
+                    android:autoSizeStepGranularity="1sp"
+                    android:autoSizeTextType="uniform"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:maxLines="1"
+                    android:text="@string/nav_mood"
+                    android:textColor="@color/vs_text_secondary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </FrameLayout>
+
+</com.google.android.material.card.MaterialCardView>
