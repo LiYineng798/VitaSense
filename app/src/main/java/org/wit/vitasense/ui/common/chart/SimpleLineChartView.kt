@@ -2,7 +2,6 @@ package org.wit.vitasense.ui.common.chart
 
 import android.animation.ValueAnimator
 import android.content.Context
-import android.content.res.Configuration
 import android.graphics.Canvas
 import android.graphics.LinearGradient
 import android.graphics.Paint
@@ -14,12 +13,12 @@ import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.View
-import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 import org.wit.vitasense.R
+import org.wit.vitasense.ui.theme.ThemeAttrColorResolver
 
 class SimpleLineChartView
     @JvmOverloads
@@ -549,59 +548,57 @@ class SimpleLineChartView
         }
 
         private fun resolvePalette(tone: TrendChartTone): ChartPalette {
-            val isNight =
-                (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
-                    Configuration.UI_MODE_NIGHT_YES
+            val panelStart = themeColor(R.attr.vsColorSurfaceAlt)
+            val panelEnd = ColorUtils.blendARGB(panelStart, themeColor(R.attr.vsColorPrimarySoft), 0.42f)
+            val primaryStrong = themeColor(R.attr.vsColorPrimaryStrong)
+            val primarySoft = themeColor(R.attr.vsColorPrimarySoft)
+            val secondaryAccent = themeColor(R.attr.vsColorSecondaryAccent)
+            val sleepAccent = themeColor(R.attr.vsColorWeekSignalSleep)
+            val alert = themeColor(R.attr.vsColorAlert)
+            val tonePalette =
+                when (tone) {
+                    TrendChartTone.SOFT ->
+                        Triple(
+                            ColorUtils.blendARGB(primarySoft, sleepAccent, 0.52f),
+                            sleepAccent,
+                            ColorUtils.blendARGB(sleepAccent, secondaryAccent, 0.3f),
+                        )
 
-            val panelStart = color(if (isNight) R.color.vs_dark_surface_alt else R.color.vs_surface)
-            val panelEnd =
-                ColorUtils.blendARGB(
-                    panelStart,
-                    color(if (isNight) R.color.vs_dark_primary_200 else R.color.vs_primary_50),
-                    if (isNight) 0.28f else 0.48f,
-                )
-            val toneLight =
-                color(
-                    when (tone) {
-                        TrendChartTone.SOFT -> if (isNight) R.color.vs_dark_primary_300 else R.color.vs_primary_200
-                        TrendChartTone.CALM -> if (isNight) R.color.vs_dark_primary_400 else R.color.vs_primary_300
-                        TrendChartTone.EMPHASIZED -> if (isNight) R.color.vs_dark_primary_500 else R.color.vs_primary_500
-                    },
-                )
-            val toneMid =
-                color(
-                    when (tone) {
-                        TrendChartTone.SOFT -> if (isNight) R.color.vs_dark_primary_400 else R.color.vs_primary_300
-                        TrendChartTone.CALM -> if (isNight) R.color.vs_dark_primary_500 else R.color.vs_primary_500
-                        TrendChartTone.EMPHASIZED -> if (isNight) R.color.vs_dark_primary_700 else R.color.vs_primary_700
-                    },
-                )
-            val toneDeep =
-                color(
-                    when (tone) {
-                        TrendChartTone.SOFT -> if (isNight) R.color.vs_dark_primary_500 else R.color.vs_primary_500
-                        TrendChartTone.CALM -> if (isNight) R.color.vs_dark_primary_700 else R.color.vs_primary_700
-                        TrendChartTone.EMPHASIZED -> if (isNight) R.color.vs_dark_primary_900 else R.color.vs_primary_900
-                    },
-                )
+                    TrendChartTone.CALM ->
+                        Triple(
+                            ColorUtils.blendARGB(primarySoft, secondaryAccent, 0.42f),
+                            secondaryAccent,
+                            ColorUtils.blendARGB(secondaryAccent, primaryStrong, 0.4f),
+                        )
+
+                    TrendChartTone.EMPHASIZED ->
+                        Triple(
+                            ColorUtils.blendARGB(primarySoft, alert, 0.35f),
+                            ColorUtils.blendARGB(alert, secondaryAccent, 0.2f),
+                            ColorUtils.blendARGB(alert, primaryStrong, 0.2f),
+                        )
+                }
+            val toneLight = tonePalette.first
+            val toneMid = tonePalette.second
+            val toneDeep = tonePalette.third
 
             return ChartPalette(
                 panelStart = panelStart,
                 panelEnd = panelEnd,
-                panelStroke = color(if (isNight) R.color.vs_dark_border_soft else R.color.vs_border_soft),
-                grid = ColorUtils.blendARGB(panelStart, toneMid, if (isNight) 0.34f else 0.18f),
-                guide = ColorUtils.setAlphaComponent(toneDeep, if (isNight) 84 else 62),
+                panelStroke = themeColor(com.google.android.material.R.attr.colorOutline),
+                grid = ColorUtils.blendARGB(panelStart, toneMid, 0.22f),
+                guide = ColorUtils.setAlphaComponent(toneDeep, 72),
                 toneLight = toneLight,
                 toneMid = toneMid,
                 toneDeep = toneDeep,
                 line = ColorUtils.blendARGB(toneDeep, toneMid, 0.28f),
-                primaryText = color(if (isNight) R.color.vs_dark_text_primary else R.color.vs_text_primary),
-                secondaryText = color(if (isNight) R.color.vs_dark_text_secondary else R.color.vs_text_secondary),
-                pointShell = color(if (isNight) R.color.vs_dark_surface else R.color.white),
+                primaryText = themeColor(android.R.attr.textColorPrimary),
+                secondaryText = themeColor(android.R.attr.textColorSecondary),
+                pointShell = themeColor(com.google.android.material.R.attr.colorSurface),
             )
         }
 
-        private fun color(resId: Int): Int = ContextCompat.getColor(context, resId)
+        private fun themeColor(attrRes: Int): Int = ThemeAttrColorResolver.color(context, attrRes)
 
         private fun dp(value: Float): Float = value * resources.displayMetrics.density
 

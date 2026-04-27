@@ -2,13 +2,13 @@ package org.wit.vitasense.ui.trends
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import kotlin.math.roundToInt
 import org.wit.vitasense.R
 import org.wit.vitasense.databinding.ItemWeeklyDetailCardBinding
+import org.wit.vitasense.ui.theme.ThemeAttrColorResolver
 
 class WeeklyDetailAdapter : RecyclerView.Adapter<WeeklyDetailAdapter.WeeklyDetailViewHolder>() {
     private val items = mutableListOf<WeeklyDetailCardModel>()
@@ -41,11 +41,12 @@ class WeeklyDetailAdapter : RecyclerView.Adapter<WeeklyDetailAdapter.WeeklyDetai
     ) : RecyclerView.ViewHolder(binding.root) {
         fun bind(item: WeeklyDetailCardModel) {
             val context = binding.root.context
-            val surface = ContextCompat.getColor(context, R.color.vs_surface)
-            val softAccent = ContextCompat.getColor(context, R.color.vs_primary_100)
-            val outline = ContextCompat.getColor(context, R.color.vs_border_soft)
-            val accent = ContextCompat.getColor(context, R.color.vs_primary_700)
-            val deepAccent = ContextCompat.getColor(context, R.color.vs_primary_900)
+            val surface = ThemeAttrColorResolver.color(context, com.google.android.material.R.attr.colorSurface)
+            val softAccent = ThemeAttrColorResolver.color(context, R.attr.vsColorPrimarySoft)
+            val outline = ThemeAttrColorResolver.color(context, com.google.android.material.R.attr.colorOutline)
+            val accent = ThemeAttrColorResolver.color(context, R.attr.vsColorSecondaryAccent)
+            val deepAccent = ThemeAttrColorResolver.color(context, R.attr.vsColorPrimaryStrong)
+            val secondaryText = ThemeAttrColorResolver.color(context, android.R.attr.textColorSecondary)
 
             binding.dayLabelText.text = item.dayLabel
             binding.dateLabelText.text = item.dateLabel
@@ -67,7 +68,7 @@ class WeeklyDetailAdapter : RecyclerView.Adapter<WeeklyDetailAdapter.WeeklyDetai
                 when (item.hrvTrend) {
                     TrendDirection.UP -> deepAccent
                     TrendDirection.DOWN -> accent
-                    TrendDirection.STABLE -> ContextCompat.getColor(context, R.color.vs_text_secondary)
+                    TrendDirection.STABLE -> secondaryText
                 },
             )
         }

@@ -61,7 +61,7 @@
                     android:includeFontPadding="false"
                     android:maxLines="1"
                     android:text="@string/nav_dashboard"
-                    android:textColor="@color/vs_text_secondary"
+                    android:textColor="?android:attr/textColorSecondary"
                     android:textSize="11sp"
                     android:textStyle="bold" />
             </LinearLayout>
@@ -95,7 +95,7 @@
                     android:includeFontPadding="false"
                     android:maxLines="1"
                     android:text="@string/nav_trends"
-                    android:textColor="@color/vs_text_secondary"
+                    android:textColor="?android:attr/textColorSecondary"
                     android:textSize="11sp"
                     android:textStyle="bold" />
             </LinearLayout>
@@ -129,7 +129,7 @@
                     android:includeFontPadding="false"
                     android:maxLines="1"
                     android:text="@string/nav_assessment"
-                    android:textColor="@color/vs_text_secondary"
+                    android:textColor="?android:attr/textColorSecondary"
                     android:textSize="11sp"
                     android:textStyle="bold" />
             </LinearLayout>
@@ -163,7 +163,7 @@
                     android:includeFontPadding="false"
                     android:maxLines="1"
                     android:text="@string/nav_mood"
-                    android:textColor="@color/vs_text_secondary"
+                    android:textColor="?android:attr/textColorSecondary"
                     android:textSize="11sp"
                     android:textStyle="bold" />
             </LinearLayout>

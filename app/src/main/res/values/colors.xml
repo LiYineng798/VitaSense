@@ -21,6 +21,10 @@
     <color name="vs_text_primary">#3E2A20</color>
     <color name="vs_text_secondary">#7A6558</color>
     <color name="vs_text_tertiary">#AD998C</color>
+    <color name="vs_default_preview_strong">#7A4B34</color>
+    <color name="vs_default_preview_mid">#C98963</color>
+    <color name="vs_default_preview_soft">#FAECE2</color>
+    <color name="vs_default_preview_surface">#F9F0E9</color>
 
     <color name="vs_dark_primary_900">#FFE8DB</color>
     <color name="vs_dark_primary_700">#F2C8AE</color>
@@ -41,5 +45,101 @@
     <color name="vs_dark_text_primary">#FFF3EB</color>
     <color name="vs_dark_text_secondary">#D8C1B4</color>
     <color name="vs_dark_text_tertiary">#A98F82</color>
+
+    <color name="vs_olive_ember_light_primary">#8C985E</color>
+    <color name="vs_olive_ember_light_primary_strong">#66703F</color>
+    <color name="vs_olive_ember_light_primary_soft">#ECE5DF</color>
+    <color name="vs_olive_ember_light_secondary">#FA5315</color>
+    <color name="vs_olive_ember_light_background">#F6F2EF</color>
+    <color name="vs_olive_ember_light_surface">#FCF9F6</color>
+    <color name="vs_olive_ember_light_surface_alt">#EAE3DE</color>
+    <color name="vs_olive_ember_light_signal_tile">#F1ECE7</color>
+    <color name="vs_olive_ember_light_signal_hrv">#66703F</color>
+    <color name="vs_olive_ember_light_signal_hr">#D66332</color>
+    <color name="vs_olive_ember_light_signal_sleep">#5A524C</color>
+    <color name="vs_olive_ember_light_border">#D0C7C1</color>
+    <color name="vs_olive_ember_light_text_primary">#1B1917</color>
+    <color name="vs_olive_ember_light_text_secondary">#625A54</color>
+    <color name="vs_olive_ember_light_text_tertiary">#938A84</color>
+
+    <color name="vs_olive_ember_dark_primary">#AAB977</color>
+    <color name="vs_olive_ember_dark_primary_strong">#CED89A</color>
+    <color name="vs_olive_ember_dark_primary_soft">#2E3323</color>
+    <color name="vs_olive_ember_dark_secondary">#FF8C61</color>
+    <color name="vs_olive_ember_dark_background">#151714</color>
+    <color name="vs_olive_ember_dark_surface">#1C1E1A</color>
+    <color name="vs_olive_ember_dark_surface_alt">#252722</color>
+    <color name="vs_olive_ember_dark_signal_tile">#22241F</color>
+    <color name="vs_olive_ember_dark_signal_hrv">#CED89A</color>
+    <color name="vs_olive_ember_dark_signal_hr">#FF8C61</color>
+    <color name="vs_olive_ember_dark_signal_sleep">#E6DDD6</color>
+    <color name="vs_olive_ember_dark_border">#43423D</color>
+    <color name="vs_olive_ember_dark_text_primary">#F4EDE7</color>
+    <color name="vs_olive_ember_dark_text_secondary">#CCC3BC</color>
+    <color name="vs_olive_ember_dark_text_tertiary">#A09892</color>
+
+    <color name="vs_sunlit_meadow_light_primary">#7BA880</color>
+    <color name="vs_sunlit_meadow_light_primary_strong">#5C8661</color>
+    <color name="vs_sunlit_meadow_light_primary_soft">#F8F2D1</color>
+    <color name="vs_sunlit_meadow_light_secondary">#A4D5E9</color>
+    <color name="vs_sunlit_meadow_light_background">#FFFBEA</color>
+    <color name="vs_sunlit_meadow_light_surface">#FFFDF5</color>
+    <color name="vs_sunlit_meadow_light_surface_alt">#F5F0D3</color>
+    <color name="vs_sunlit_meadow_light_signal_tile">#F8F6E9</color>
+    <color name="vs_sunlit_meadow_light_signal_hrv">#5C8661</color>
+    <color name="vs_sunlit_meadow_light_signal_hr">#6EB5D6</color>
+    <color name="vs_sunlit_meadow_light_signal_sleep">#D2B650</color>
+    <color name="vs_sunlit_meadow_light_border">#D8D8C8</color>
+    <color name="vs_sunlit_meadow_light_text_primary">#314136</color>
+    <color name="vs_sunlit_meadow_light_text_secondary">#68776D</color>
+    <color name="vs_sunlit_meadow_light_text_tertiary">#919C92</color>
+
+    <color name="vs_sunlit_meadow_dark_primary">#9FC6A4</color>
+    <color name="vs_sunlit_meadow_dark_primary_strong">#B7DBBB</color>
+    <color name="vs_sunlit_meadow_dark_primary_soft">#243127</color>
+    <color name="vs_sunlit_meadow_dark_secondary">#8FC8E3</color>
+    <color name="vs_sunlit_meadow_dark_background">#111612</color>
+    <color name="vs_sunlit_meadow_dark_surface">#171D18</color>
+    <color name="vs_sunlit_meadow_dark_surface_alt">#202722</color>
+    <color name="vs_sunlit_meadow_dark_signal_tile">#1E2520</color>
+    <color name="vs_sunlit_meadow_dark_signal_hrv">#B7DBBB</color>
+    <color name="vs_sunlit_meadow_dark_signal_hr">#8FC8E3</color>
+    <color name="vs_sunlit_meadow_dark_signal_sleep">#F2D96E</color>
+    <color name="vs_sunlit_meadow_dark_border">#3D4940</color>
+    <color name="vs_sunlit_meadow_dark_text_primary">#F4F3E8</color>
+    <color name="vs_sunlit_meadow_dark_text_secondary">#CAD0C8</color>
+    <color name="vs_sunlit_meadow_dark_text_tertiary">#9FA99F</color>
+
+    <color name="vs_rose_indigo_light_primary">#F54769</color>
+    <color name="vs_rose_indigo_light_primary_strong">#41436B</color>
+    <color name="vs_rose_indigo_light_primary_soft">#FFF0EB</color>
+    <color name="vs_rose_indigo_light_secondary">#984062</color>
+    <color name="vs_rose_indigo_light_background">#FFF7F8</color>
+    <color name="vs_rose_indigo_light_surface">#FFFCFD</color>
+    <color name="vs_rose_indigo_light_surface_alt">#FCE9EE</color>
+    <color name="vs_rose_indigo_light_signal_tile">#FFF2F4</color>
+    <color name="vs_rose_indigo_light_signal_hrv">#41436B</color>
+    <color name="vs_rose_indigo_light_signal_hr">#984062</color>
+    <color name="vs_rose_indigo_light_signal_sleep">#FF9678</color>
+    <color name="vs_rose_indigo_light_border">#E8CDD8</color>
+    <color name="vs_rose_indigo_light_text_primary">#313355</color>
+    <color name="vs_rose_indigo_light_text_secondary">#796A77</color>
+    <color name="vs_rose_indigo_light_text_tertiary">#A18B99</color>
+
+    <color name="vs_rose_indigo_dark_primary">#F56A89</color>
+    <color name="vs_rose_indigo_dark_primary_strong">#AEB3DD</color>
+    <color name="vs_rose_indigo_dark_primary_soft">#342638</color>
+    <color name="vs_rose_indigo_dark_secondary">#FF9678</color>
+    <color name="vs_rose_indigo_dark_background">#141622</color>
+    <color name="vs_rose_indigo_dark_surface">#1B1D2E</color>
+    <color name="vs_rose_indigo_dark_surface_alt">#23263A</color>
+    <color name="vs_rose_indigo_dark_signal_tile">#232435</color>
+    <color name="vs_rose_indigo_dark_signal_hrv">#AEB3DD</color>
+    <color name="vs_rose_indigo_dark_signal_hr">#F56A89</color>
+    <color name="vs_rose_indigo_dark_signal_sleep">#FFB29A</color>
+    <color name="vs_rose_indigo_dark_border">#40425B</color>
+    <color name="vs_rose_indigo_dark_text_primary">#F9EEF3</color>
+    <color name="vs_rose_indigo_dark_text_secondary">#D4C5CD</color>
+    <color name="vs_rose_indigo_dark_text_tertiary">#A8949F</color>
 
 </resources>

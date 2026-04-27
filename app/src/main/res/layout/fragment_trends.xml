@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/vs_background"
+    android:background="?android:windowBackground"
     android:overScrollMode="never">
 
     <LinearLayout
@@ -16,7 +16,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/trends_title"
-            android:textColor="@color/vs_text_primary"
+            android:textColor="?android:attr/textColorPrimary"
             android:textSize="28sp"
             android:textStyle="bold" />
 
@@ -25,7 +25,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:textColor="@color/vs_text_secondary"
+            android:textColor="?android:attr/textColorSecondary"
             android:textSize="14sp" />
 
         <TextView
@@ -33,7 +33,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:textColor="@color/vs_primary_700"
+            android:textColor="?attr/vsColorPrimaryStrong"
             android:textSize="13sp" />
 
         <com.google.android.material.button.MaterialButtonToggleGroup
@@ -65,7 +65,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:text="@string/trends_empty_hint"
-            android:textColor="@color/vs_text_secondary" />
+            android:textColor="?android:attr/textColorSecondary" />
 
         <LinearLayout
             android:id="@+id/weekSection"
@@ -78,10 +78,10 @@
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardBackgroundColor="@color/vs_surface"
+                app:cardBackgroundColor="?attr/colorSurface"
                 app:cardCornerRadius="24dp"
                 app:cardElevation="0dp"
-                app:strokeColor="@color/vs_border_soft"
+                app:strokeColor="?attr/colorOutline"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -94,7 +94,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/trends_week_signals_title"
-                        android:textColor="@color/vs_text_primary"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
@@ -103,7 +103,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
                         android:text="@string/trends_week_signals_caption"
-                        android:textColor="@color/vs_text_secondary"
+                        android:textColor="?android:attr/textColorSecondary"
                         android:textSize="13sp" />
 
                     <LinearLayout
@@ -131,7 +131,7 @@
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
                                     android:text="HRV"
-                                    android:textColor="@color/vs_text_secondary"
+                                    android:textColor="?android:attr/textColorSecondary"
                                     android:textSize="12sp" />
 
                                 <TextView
@@ -139,7 +139,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="6dp"
-                                    android:textColor="@color/vs_text_primary"
+                                    android:textColor="?android:attr/textColorPrimary"
                                     android:textSize="12sp"
                                     android:textStyle="bold" />
                             </LinearLayout>
@@ -171,14 +171,14 @@
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
                                     android:text="@string/trends_week_heart_rate_short"
-                                    android:textColor="@color/vs_text_secondary"
+                                    android:textColor="?android:attr/textColorSecondary"
                                     android:textSize="12sp" />
 
                                 <TextView
                                     android:id="@+id/weekHeartRateValueText"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:textColor="@color/vs_text_primary"
+                                    android:textColor="?android:attr/textColorPrimary"
                                     android:textSize="12sp"
                                     android:textStyle="bold" />
                             </LinearLayout>
@@ -210,14 +210,14 @@
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
                                     android:text="@string/trends_week_sleep_short"
-                                    android:textColor="@color/vs_text_secondary"
+                                    android:textColor="?android:attr/textColorSecondary"
                                     android:textSize="12sp" />
 
                                 <TextView
                                     android:id="@+id/weekSleepValueText"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:textColor="@color/vs_text_primary"
+                                    android:textColor="?android:attr/textColorPrimary"
                                     android:textSize="12sp"
                                     android:textStyle="bold" />
                             </LinearLayout>
@@ -236,10 +236,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
-                app:cardBackgroundColor="@color/vs_surface"
+                app:cardBackgroundColor="?attr/colorSurface"
                 app:cardCornerRadius="24dp"
                 app:cardElevation="0dp"
-                app:strokeColor="@color/vs_border_soft"
+                app:strokeColor="?attr/colorOutline"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -252,7 +252,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/trends_week_stories_title"
-                        android:textColor="@color/vs_text_primary"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
@@ -261,7 +261,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
                         android:text="@string/trends_week_stories_caption"
-                        android:textColor="@color/vs_text_secondary"
+                        android:textColor="?android:attr/textColorSecondary"
                         android:textSize="13sp" />
 
                     <androidx.recyclerview.widget.RecyclerView
@@ -288,10 +288,10 @@
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardBackgroundColor="@color/vs_surface"
+                app:cardBackgroundColor="?attr/colorSurface"
                 app:cardCornerRadius="24dp"
                 app:cardElevation="0dp"
-                app:strokeColor="@color/vs_border_soft"
+                app:strokeColor="?attr/colorOutline"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -304,7 +304,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/trends_month_chart_title"
-                        android:textColor="@color/vs_text_primary"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
@@ -313,7 +313,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
                         android:text="@string/trends_month_chart_caption"
-                        android:textColor="@color/vs_text_secondary"
+                        android:textColor="?android:attr/textColorSecondary"
                         android:textSize="13sp" />
 
                     <org.wit.vitasense.ui.trends.MonthlyInsightChartView
@@ -328,10 +328,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
-                app:cardBackgroundColor="@color/vs_surface"
+                app:cardBackgroundColor="?attr/colorSurface"
                 app:cardCornerRadius="24dp"
                 app:cardElevation="0dp"
-                app:strokeColor="@color/vs_border_soft"
+                app:strokeColor="?attr/colorOutline"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -344,7 +344,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/trends_month_weekly_title"
-                        android:textColor="@color/vs_text_primary"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
@@ -353,7 +353,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
                         android:text="@string/trends_month_weekly_caption"
-                        android:textColor="@color/vs_text_secondary"
+                        android:textColor="?android:attr/textColorSecondary"
                         android:textSize="13sp" />
 
                     <androidx.recyclerview.widget.RecyclerView
@@ -372,10 +372,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
-                app:cardBackgroundColor="@color/vs_surface"
+                app:cardBackgroundColor="?attr/colorSurface"
                 app:cardCornerRadius="24dp"
                 app:cardElevation="0dp"
-                app:strokeColor="@color/vs_border_soft"
+                app:strokeColor="?attr/colorOutline"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -388,7 +388,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/trends_month_heatmap_title"
-                        android:textColor="@color/vs_text_primary"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
@@ -397,7 +397,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
                         android:text="@string/trends_month_heatmap_caption"
-                        android:textColor="@color/vs_text_secondary"
+                        android:textColor="?android:attr/textColorSecondary"
                         android:textSize="13sp" />
 
                     <org.wit.vitasense.ui.trends.RecoveryHeatmapView
@@ -413,7 +413,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
                 android:text="@string/trends_month_insights_title"
-                android:textColor="@color/vs_text_primary"
+                android:textColor="?android:attr/textColorPrimary"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -422,7 +422,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 android:text="@string/trends_month_insights_caption"
-                android:textColor="@color/vs_text_secondary"
+                android:textColor="?android:attr/textColorSecondary"
                 android:textSize="13sp" />
 
             <com.google.android.material.card.MaterialCardView
@@ -430,10 +430,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
-                app:cardBackgroundColor="@color/vs_surface_alt"
+                app:cardBackgroundColor="?attr/vsColorSurfaceAlt"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="0dp"
-                app:strokeColor="@color/vs_border_soft"
+                app:strokeColor="?attr/colorOutline"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -446,7 +446,7 @@
                         android:id="@+id/insightTitleOne"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="@color/vs_text_secondary"
+                        android:textColor="?android:attr/textColorSecondary"
                         android:textSize="13sp" />
 
                     <TextView
@@ -454,7 +454,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:textColor="@color/vs_text_primary"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:textSize="24sp"
                         android:textStyle="bold" />
 
@@ -463,7 +463,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
-                        android:textColor="@color/vs_text_secondary"
+                        android:textColor="?android:attr/textColorSecondary"
                         android:textSize="13sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -473,10 +473,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                app:cardBackgroundColor="@color/vs_surface_alt"
+                app:cardBackgroundColor="?attr/vsColorSurfaceAlt"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="0dp"
-                app:strokeColor="@color/vs_border_soft"
+                app:strokeColor="?attr/colorOutline"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -489,7 +489,7 @@
                         android:id="@+id/insightTitleTwo"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="@color/vs_text_secondary"
+                        android:textColor="?android:attr/textColorSecondary"
                         android:textSize="13sp" />
 
                     <TextView
@@ -497,7 +497,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:textColor="@color/vs_text_primary"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:textSize="24sp"
                         android:textStyle="bold" />
 
@@ -506,7 +506,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
-                        android:textColor="@color/vs_text_secondary"
+                        android:textColor="?android:attr/textColorSecondary"
                         android:textSize="13sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -517,10 +517,10 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:layout_marginBottom="16dp"
-                app:cardBackgroundColor="@color/vs_surface_alt"
+                app:cardBackgroundColor="?attr/vsColorSurfaceAlt"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="0dp"
-                app:strokeColor="@color/vs_border_soft"
+                app:strokeColor="?attr/colorOutline"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -533,7 +533,7 @@
                         android:id="@+id/insightTitleThree"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="@color/vs_text_secondary"
+                        android:textColor="?android:attr/textColorSecondary"
                         android:textSize="13sp" />
 
                     <TextView
@@ -541,7 +541,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:textColor="@color/vs_text_primary"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:textSize="24sp"
                         android:textStyle="bold" />
 
@@ -550,7 +550,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
-                        android:textColor="@color/vs_text_secondary"
+                        android:textColor="?android:attr/textColorSecondary"
                         android:textSize="13sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

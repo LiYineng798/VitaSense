@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/vs_background">
+    android:background="?android:windowBackground">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -15,7 +15,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/mood_title"
-            android:textColor="@color/vs_text_primary"
+            android:textColor="?android:attr/textColorPrimary"
             android:textSize="28sp"
             android:textStyle="bold" />
 
@@ -23,7 +23,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            app:cardBackgroundColor="@color/vs_surface"
+            app:cardBackgroundColor="?attr/colorSurface"
             app:cardCornerRadius="20dp">
 
             <LinearLayout
@@ -36,7 +36,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/mood_add_section"
-                    android:textColor="@color/vs_text_primary"
+                    android:textColor="?android:attr/textColorPrimary"
                     android:textStyle="bold" />
 
                 <com.google.android.material.textfield.TextInputLayout
@@ -141,7 +141,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            app:cardBackgroundColor="@color/vs_surface"
+            app:cardBackgroundColor="?attr/colorSurface"
             app:cardCornerRadius="20dp">
 
             <LinearLayout
@@ -154,7 +154,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/mood_filter_section"
-                    android:textColor="@color/vs_text_primary"
+                    android:textColor="?android:attr/textColorPrimary"
                     android:textStyle="bold" />
 
                 <com.google.android.material.button.MaterialButtonToggleGroup
@@ -251,7 +251,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:text="@string/mood_history_title"
-            android:textColor="@color/vs_text_primary"
+            android:textColor="?android:attr/textColorPrimary"
             android:textStyle="bold" />
 
         <TextView
@@ -260,7 +260,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:text="@string/mood_empty_hint"
-            android:textColor="@color/vs_text_secondary" />
+            android:textColor="?android:attr/textColorSecondary" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/moodRecyclerView"

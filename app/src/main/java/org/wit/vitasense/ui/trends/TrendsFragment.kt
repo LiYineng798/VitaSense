@@ -1,12 +1,10 @@
 package org.wit.vitasense.ui.trends
 
-import android.content.res.Configuration
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -21,6 +19,7 @@ import org.wit.vitasense.VitaSenseApplication
 import org.wit.vitasense.databinding.FragmentTrendsBinding
 import org.wit.vitasense.model.TimeRange
 import org.wit.vitasense.ui.common.VitaSenseViewModelFactory
+import org.wit.vitasense.ui.theme.ThemeAttrColorResolver
 
 class TrendsFragment : Fragment() {
     private var _binding: FragmentTrendsBinding? = null
@@ -103,19 +102,19 @@ class TrendsFragment : Fragment() {
             model = model.trendSeries.getOrNull(0),
             valueText = binding.weekHrvValueText,
             sparklineView = binding.weekHrvSparkline,
-            accentColor = resolveWeekSignalColor(R.color.vs_week_signal_hrv, R.color.vs_dark_week_signal_hrv),
+            accentColor = resolveWeekSignalColor(R.attr.vsColorWeekSignalHrv),
         )
         bindSparkline(
             model = model.trendSeries.getOrNull(1),
             valueText = binding.weekHeartRateValueText,
             sparklineView = binding.weekHeartRateSparkline,
-            accentColor = resolveWeekSignalColor(R.color.vs_week_signal_hr, R.color.vs_dark_week_signal_hr),
+            accentColor = resolveWeekSignalColor(R.attr.vsColorWeekSignalHeartRate),
         )
         bindSparkline(
             model = model.trendSeries.getOrNull(2),
             valueText = binding.weekSleepValueText,
             sparklineView = binding.weekSleepSparkline,
-            accentColor = resolveWeekSignalColor(R.color.vs_week_signal_sleep, R.color.vs_dark_week_signal_sleep),
+            accentColor = resolveWeekSignalColor(R.attr.vsColorWeekSignalSleep),
         )
 
         weeklyDetailAdapter.submit(model.cards)
@@ -161,15 +160,7 @@ class TrendsFragment : Fragment() {
         sparklineView.accentColor = accentColor
     }
 
-    private fun resolveWeekSignalColor(
-        lightRes: Int,
-        darkRes: Int,
-    ): Int {
-        val isNight =
-            (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
-                Configuration.UI_MODE_NIGHT_YES
-        return ContextCompat.getColor(requireContext(), if (isNight) darkRes else lightRes)
-    }
+    private fun resolveWeekSignalColor(attrRes: Int): Int = ThemeAttrColorResolver.color(requireContext(), attrRes)
 
     private fun bindInsightCard(
         card: MaterialCardView,
@@ -179,11 +170,13 @@ class TrendsFragment : Fragment() {
         model: MonthlyInsightCardModel?,
     ) {
         val context = requireContext()
-        val surfaceAlt = ContextCompat.getColor(context, R.color.vs_surface_alt)
-        val border = ContextCompat.getColor(context, R.color.vs_border_soft)
-        val deepAccent = ContextCompat.getColor(context, R.color.vs_primary_900)
-        val accent = ContextCompat.getColor(context, R.color.vs_primary_700)
-        val secondary = ContextCompat.getColor(context, R.color.vs_text_secondary)
+        val surfaceAlt = ThemeAttrColorResolver.color(context, R.attr.vsColorSurfaceAlt)
+        val selectedSurface = ThemeAttrColorResolver.color(context, R.attr.vsColorPrimarySoft)
+        val border = ThemeAttrColorResolver.color(context, com.google.android.material.R.attr.colorOutline)
+        val deepAccent = ThemeAttrColorResolver.color(context, R.attr.vsColorPrimaryStrong)
+        val accent = ThemeAttrColorResolver.color(context, R.attr.vsColorSecondaryAccent)
+        val primaryText = ThemeAttrColorResolver.color(context, android.R.attr.textColorPrimary)
+        val secondary = ThemeAttrColorResolver.color(context, android.R.attr.textColorSecondary)
 
         title.text = model?.title.orEmpty()
         value.text = model?.valueText.orEmpty()
@@ -191,7 +184,7 @@ class TrendsFragment : Fragment() {
 
         when (model?.trendDirection) {
             TrendDirection.UP -> {
-                card.setCardBackgroundColor(ContextCompat.getColor(context, R.color.vs_primary_100))
+                card.setCardBackgroundColor(selectedSurface)
                 card.strokeColor = accent
                 value.setTextColor(deepAccent)
                 delta.setTextColor(accent)
@@ -209,7 +202,7 @@ class TrendsFragment : Fragment() {
             -> {
                 card.setCardBackgroundColor(surfaceAlt)
                 card.strokeColor = border
-                value.setTextColor(ContextCompat.getColor(context, R.color.vs_text_primary))
+                value.setTextColor(primaryText)
                 delta.setTextColor(secondary)
             }
         }

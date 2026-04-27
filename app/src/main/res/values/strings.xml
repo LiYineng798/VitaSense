@@ -13,8 +13,8 @@
     <string name="mood_placeholder">This page will support adding, filtering, and deleting history.</string>
     <string name="settings_placeholder">This page will provide theme controls and demo import tools.</string>
 
-    <string name="theme_light">Light Mode</string>
-    <string name="theme_dark">Dark Mode</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
 
     <string name="dashboard_title">Today\'s Status</string>
     <string name="dashboard_score_label">Health Assessment Score</string>
@@ -92,6 +92,13 @@
 
     <string name="settings_title">Settings &amp; Import</string>
     <string name="settings_theme_section">Theme</string>
+    <string name="settings_theme_family_section">Theme Family</string>
+    <string name="settings_theme_mode_section">Mode</string>
+    <string name="settings_theme_status_format">%1$s / %2$s</string>
+    <string name="theme_family_default">Default</string>
+    <string name="theme_family_olive_ember">Olive Ember</string>
+    <string name="theme_family_sunlit_meadow">Sunlit Meadow</string>
+    <string name="theme_family_rose_indigo">Rose Indigo</string>
     <string name="settings_import_section">Import Demo Data</string>
     <string name="settings_clear_all_data">Delete All Data</string>
     <string name="settings_clear_all_message">Delete all local data?</string>

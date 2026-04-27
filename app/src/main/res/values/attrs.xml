@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="vsColorPrimaryStrong" format="color|reference" />
+    <attr name="vsColorPrimarySoft" format="color|reference" />
+    <attr name="vsColorSecondaryAccent" format="color|reference" />
+    <attr name="vsColorSurfaceAlt" format="color|reference" />
+    <attr name="vsColorWeekSignalTile" format="color|reference" />
+    <attr name="vsColorWeekSignalHrv" format="color|reference" />
+    <attr name="vsColorWeekSignalHeartRate" format="color|reference" />
+    <attr name="vsColorWeekSignalSleep" format="color|reference" />
+    <attr name="vsColorAlert" format="color|reference" />
+    <attr name="vsColorTextTertiary" format="color|reference" />
+</resources>

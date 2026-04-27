@@ -1,5 +1,6 @@
 package org.wit.vitasense.ui
 
+import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
@@ -36,6 +37,7 @@ class MainActivitySmokeTest {
                 val includeParams = includeRoot.layoutParams as ConstraintLayout.LayoutParams
                 val card = includeRoot as MaterialCardView
                 val board = activity.findViewById<View>(R.id.floatingBottomTabsBoard)
+                val indicator = activity.findViewById<View>(R.id.bottomTabIndicator)
                 val foreground = activity.findViewById<LinearLayout>(R.id.layoutTabForeground)
                 val navHost = activity.findViewById<View>(R.id.nav_host)
                 val navHostFragment =
@@ -62,9 +64,12 @@ class MainActivitySmokeTest {
                 val trendsParams = trends.layoutParams as LinearLayout.LayoutParams
                 val assessmentParams = assessment.layoutParams as LinearLayout.LayoutParams
                 val moodParams = mood.layoutParams as LinearLayout.LayoutParams
+                val colorSurfaceAttr = TypedValue()
 
                 assertTrue(card.isShown)
                 assertTrue(board.isShown)
+                assertTrue(indicator.isShown)
+                assertTrue(activity.theme.resolveAttribute(com.google.android.material.R.attr.colorSurface, colorSurfaceAttr, true))
                 assertEquals(dp(activity, 20), includeParams.marginStart)
                 assertEquals(dp(activity, 20), includeParams.marginEnd)
                 assertEquals(dp(activity, 16), includeParams.bottomMargin)

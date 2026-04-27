@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -20,6 +19,7 @@ import org.wit.vitasense.databinding.FragmentDashboardBinding
 import org.wit.vitasense.ui.common.VitaSenseViewModelFactory
 import org.wit.vitasense.ui.navigation.BottomTabDestination
 import org.wit.vitasense.ui.navigation.TopLevelNavigator
+import org.wit.vitasense.ui.theme.ThemeAttrColorResolver
 
 class DashboardFragment : Fragment() {
     private var _binding: FragmentDashboardBinding? = null
@@ -121,6 +121,12 @@ class DashboardFragment : Fragment() {
         }
 
         repeat(count) { index ->
+            val dotColor =
+                if (index == selected) {
+                    ThemeAttrColorResolver.color(requireContext(), R.attr.vsColorPrimaryStrong)
+                } else {
+                    ThemeAttrColorResolver.color(requireContext(), com.google.android.material.R.attr.colorOutline)
+                }
             val dot =
                 View(requireContext()).apply {
                     layoutParams =
@@ -130,12 +136,7 @@ class DashboardFragment : Fragment() {
                     background =
                         GradientDrawable().apply {
                             shape = GradientDrawable.OVAL
-                            setColor(
-                                ContextCompat.getColor(
-                                    context,
-                                    if (index == selected) R.color.vs_primary_700 else R.color.vs_border_soft,
-                                ),
-                            )
+                            setColor(dotColor)
                         }
                 }
             binding.trendIndicatorContainer.addView(dot)

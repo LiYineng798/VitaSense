@@ -1,7 +1,6 @@
 package org.wit.vitasense
 
 import android.content.res.ColorStateList
-import android.content.res.Configuration
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
@@ -10,7 +9,6 @@ import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -23,6 +21,7 @@ import androidx.navigation.navOptions
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.wit.vitasense.model.ThemeFamily
 import org.wit.vitasense.databinding.ActivityMainBinding
 import org.wit.vitasense.model.ThemeMode
 import org.wit.vitasense.ui.navigation.BottomTabDestination
@@ -31,12 +30,16 @@ import org.wit.vitasense.ui.navigation.IndicatorBounds
 import org.wit.vitasense.ui.navigation.LiquidIndicatorMotionPlanner
 import org.wit.vitasense.ui.navigation.LiquidTabIndicatorView
 import org.wit.vitasense.ui.navigation.TopLevelNavigator
+import org.wit.vitasense.ui.theme.ThemeAttrColorResolver
+import org.wit.vitasense.ui.theme.ThemeFamilyStyleResolver
 
 class MainActivity : AppCompatActivity(), TopLevelNavigator {
     private lateinit var binding: ActivityMainBinding
     private lateinit var navController: NavController
     private var selectedBottomDestination = BottomTabDestination.HOME
     private var currentContentBottomInsetPx = 0
+    private var appliedThemeFamily = ThemeFamily.DEFAULT
+    private var appliedThemeMode = ThemeMode.LIGHT
     private val motionPlanner = LiquidIndicatorMotionPlanner()
     private val bottomTabIndicatorHorizontalInsetPx by lazy {
         resources.getDimension(R.dimen.vs_bottom_tab_indicator_horizontal_inset)
@@ -48,7 +51,12 @@ class MainActivity : AppCompatActivity(), TopLevelNavigator {
     override fun onCreate(savedInstanceState: Bundle?) {
         val appContainer = (application as VitaSenseApplication).appContainer
         runBlocking {
-            applyTheme(appContainer.settingsRepository.getThemeMode())
+            val themeFamily = appContainer.settingsRepository.getThemeFamily()
+            val themeMode = appContainer.settingsRepository.getThemeMode()
+            appliedThemeFamily = themeFamily
+            appliedThemeMode = themeMode
+            setTheme(ThemeFamilyStyleResolver.styleFor(themeFamily))
+            applyTheme(themeMode)
             runCatching {
                 appContainer.derivedContentSync.refreshIfNeeded()
             }
@@ -90,7 +98,19 @@ class MainActivity : AppCompatActivity(), TopLevelNavigator {
 
         lifecycleScope.launch {
             appContainer.settingsRepository.observeThemeMode().collectLatest { mode ->
-                applyTheme(mode)
+                if (appliedThemeMode != mode) {
+                    appliedThemeMode = mode
+                    applyTheme(mode)
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            appContainer.settingsRepository.observeThemeFamily().collectLatest { family ->
+                if (appliedThemeFamily != family) {
+                    appliedThemeFamily = family
+                    recreate()
+                }
             }
         }
     }
@@ -196,36 +216,11 @@ class MainActivity : AppCompatActivity(), TopLevelNavigator {
     }
 
     private fun resolveIndicatorColor(): Int =
-        ContextCompat.getColor(
-            this,
-            if (isNightMode()) {
-                R.color.vs_dark_primary_500
-            } else {
-                R.color.vs_primary_900
-            },
-        )
+        ThemeAttrColorResolver.color(this, R.attr.vsColorPrimaryStrong)
 
     private fun resolveSelectedTabContentColor(): Int =
-        ContextCompat.getColor(
-            this,
-            if (isNightMode()) {
-                R.color.vs_dark_text_primary
-            } else {
-                R.color.white
-            },
-        )
+        ThemeAttrColorResolver.color(this, com.google.android.material.R.attr.colorOnPrimary)
 
     private fun resolveUnselectedTabContentColor(): Int =
-        ContextCompat.getColor(
-            this,
-            if (isNightMode()) {
-                R.color.vs_dark_text_secondary
-            } else {
-                R.color.vs_text_secondary
-            },
-        )
-
-    private fun isNightMode(): Boolean =
-        (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
-            Configuration.UI_MODE_NIGHT_YES
+        ThemeAttrColorResolver.color(this, android.R.attr.textColorSecondary)
 }

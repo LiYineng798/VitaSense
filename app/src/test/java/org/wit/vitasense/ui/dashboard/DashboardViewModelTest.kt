@@ -1,24 +1,17 @@
 package org.wit.vitasense.ui.dashboard
 
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.TestDispatcher
-import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.yield
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.TestWatcher
-import org.junit.runner.Description
 import org.wit.vitasense.db.entity.DailyPhysiologySummaryEntity
 import org.wit.vitasense.db.entity.HeartRateRawSampleEntity
 import org.wit.vitasense.db.entity.RiskAssessmentRecordEntity
@@ -27,17 +20,14 @@ import org.wit.vitasense.model.ImportOperationResult
 import org.wit.vitasense.model.ImportStatus
 import org.wit.vitasense.repository.HealthRepository
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class DashboardViewModelTest {
-    @get:Rule
-    val mainDispatcherRule = MainDispatcherRule()
-
     @Test
     fun exposes_total_score_and_three_home_trend_pages() =
-        runTest {
+        runBlocking {
             val repository = FakeHealthRepository()
-            val viewModel = DashboardViewModel(repository)
-            val collector = collectState(viewModel, this)
+            val scope = CoroutineScope(Job() + Dispatchers.Unconfined)
+            val viewModel = DashboardViewModel(repository, scope)
+            val collector = collectState(viewModel, scope)
 
             repository.summaries.value =
                 listOf(
@@ -47,7 +37,7 @@ class DashboardViewModelTest {
                 )
             repository.latestRisk.value = risk(totalScore = 91)
 
-            advanceUntilIdle()
+            yield()
 
             val state = viewModel.state.value
             assertEquals("91", state.totalScore)
@@ -55,12 +45,13 @@ class DashboardViewModelTest {
             assertTrue(state.showTrendDots)
 
             collector.cancel()
+            scope.coroutineContext[Job]?.cancel()
         }
 
     private fun collectState(
         viewModel: DashboardViewModel,
-        scope: TestScope,
-    ) = scope.backgroundScope.launch {
+        scope: CoroutineScope,
+    ) = scope.launch {
         viewModel.state.collect {}
     }
 
@@ -121,17 +112,4 @@ class DashboardViewModelTest {
         explanation = "Stable recovery",
         suggestionText = "Keep the current pace",
     )
-}
-
-@OptIn(ExperimentalCoroutinesApi::class)
-class MainDispatcherRule(
-    private val dispatcher: TestDispatcher = StandardTestDispatcher(),
-) : TestWatcher() {
-    override fun starting(description: Description) {
-        Dispatchers.setMain(dispatcher)
-    }
-
-    override fun finished(description: Description) {
-        Dispatchers.resetMain()
-    }
 }

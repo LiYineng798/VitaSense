@@ -1,7 +1,6 @@
 package org.wit.vitasense.ui.trends
 
 import android.content.Context
-import android.content.res.Configuration
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
@@ -9,11 +8,11 @@ import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.View
-import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import kotlin.math.ceil
 import kotlin.math.max
 import org.wit.vitasense.R
+import org.wit.vitasense.ui.theme.ThemeAttrColorResolver
 
 class RecoveryHeatmapView
     @JvmOverloads
@@ -238,25 +237,22 @@ class RecoveryHeatmapView
         ): Int = ColorUtils.blendARGB(startColor, endColor, fraction)
 
         private fun resolvePalette(): HeatmapPalette {
-            val isNight =
-                (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
-                    Configuration.UI_MODE_NIGHT_YES
             return HeatmapPalette(
-                low = color(if (isNight) R.color.vs_dark_primary_200 else R.color.vs_primary_100),
-                high = color(if (isNight) R.color.vs_dark_primary_700 else R.color.vs_primary_700),
-                border = color(if (isNight) R.color.vs_dark_border_soft else R.color.vs_border_soft),
-                selectedBorder = color(if (isNight) R.color.vs_dark_primary_900 else R.color.vs_primary_900),
-                dot = color(if (isNight) R.color.vs_alert_red_dark else R.color.vs_alert_red),
-                textOnLight = color(if (isNight) R.color.vs_dark_text_primary else R.color.vs_text_primary),
-                textOnDark = color(R.color.white),
-                tooltipBackground = color(if (isNight) R.color.vs_dark_surface else R.color.vs_surface),
-                tooltipStroke = color(if (isNight) R.color.vs_dark_border_soft else R.color.vs_border_soft),
-                tooltipTextPrimary = color(if (isNight) R.color.vs_dark_text_primary else R.color.vs_text_primary),
-                tooltipTextSecondary = color(if (isNight) R.color.vs_dark_text_secondary else R.color.vs_text_secondary),
+                low = themeColor(R.attr.vsColorPrimarySoft),
+                high = themeColor(R.attr.vsColorPrimaryStrong),
+                border = themeColor(com.google.android.material.R.attr.colorOutline),
+                selectedBorder = themeColor(R.attr.vsColorSecondaryAccent),
+                dot = themeColor(R.attr.vsColorAlert),
+                textOnLight = themeColor(android.R.attr.textColorPrimary),
+                textOnDark = themeColor(com.google.android.material.R.attr.colorOnPrimary),
+                tooltipBackground = themeColor(com.google.android.material.R.attr.colorSurface),
+                tooltipStroke = themeColor(com.google.android.material.R.attr.colorOutline),
+                tooltipTextPrimary = themeColor(android.R.attr.textColorPrimary),
+                tooltipTextSecondary = themeColor(android.R.attr.textColorSecondary),
             )
         }
 
-        private fun color(resId: Int): Int = ContextCompat.getColor(context, resId)
+        private fun themeColor(attrRes: Int): Int = ThemeAttrColorResolver.color(context, attrRes)
 
         private fun dp(value: Float): Float =
             TypedValue.applyDimension(

@@ -2,7 +2,6 @@ package org.wit.vitasense.ui.trends
 
 import android.animation.ValueAnimator
 import android.content.Context
-import android.content.res.Configuration
 import android.graphics.Canvas
 import android.graphics.DashPathEffect
 import android.graphics.Paint
@@ -13,10 +12,10 @@ import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.View
-import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import org.wit.vitasense.R
 import org.wit.vitasense.ui.common.chart.ChartScaleCalculator
+import org.wit.vitasense.ui.theme.ThemeAttrColorResolver
 import kotlin.math.max
 
 class MonthlyInsightChartView
@@ -452,31 +451,33 @@ class MonthlyInsightChartView
         }
 
         private fun resolvePalette(): ChartPalette {
-            val isNight =
-                (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
-                    Configuration.UI_MODE_NIGHT_YES
+            val primarySoft = themeColor(R.attr.vsColorPrimarySoft)
+            val primaryStrong = themeColor(R.attr.vsColorPrimaryStrong)
+            val hrvAccent = themeColor(R.attr.vsColorWeekSignalHrv)
+            val heartAccent = themeColor(R.attr.vsColorWeekSignalHeartRate)
+            val sleepAccent = themeColor(R.attr.vsColorWeekSignalSleep)
             return ChartPalette(
-                grid = color(if (isNight) R.color.vs_dark_border_soft else R.color.vs_border_soft),
+                grid = themeColor(com.google.android.material.R.attr.colorOutline),
                 sleepBar =
                     ColorUtils.blendARGB(
-                        color(if (isNight) R.color.vs_dark_primary_300 else R.color.vs_primary_100),
-                        color(if (isNight) R.color.vs_dark_primary_500 else R.color.vs_primary_300),
+                        primarySoft,
+                        sleepAccent,
                         0.38f,
                     ),
-                smoothLine = color(if (isNight) R.color.vs_dark_primary_900 else R.color.vs_primary_900),
-                heartLine = color(if (isNight) R.color.vs_dark_primary_500 else R.color.vs_primary_500),
-                rawPoint = color(if (isNight) R.color.vs_dark_primary_700 else R.color.vs_primary_700),
-                marker = color(if (isNight) R.color.vs_alert_red_dark else R.color.vs_alert_red),
-                pointShell = color(if (isNight) R.color.vs_dark_surface else R.color.white),
-                guide = color(if (isNight) R.color.vs_dark_primary_700 else R.color.vs_primary_700),
-                tooltipBackground = color(if (isNight) R.color.vs_dark_surface else R.color.vs_surface),
-                tooltipStroke = color(if (isNight) R.color.vs_dark_border_soft else R.color.vs_border_soft),
-                tooltipTextPrimary = color(if (isNight) R.color.vs_dark_text_primary else R.color.vs_text_primary),
-                tooltipTextSecondary = color(if (isNight) R.color.vs_dark_text_secondary else R.color.vs_text_secondary),
+                smoothLine = hrvAccent,
+                heartLine = heartAccent,
+                rawPoint = primaryStrong,
+                marker = themeColor(R.attr.vsColorAlert),
+                pointShell = themeColor(com.google.android.material.R.attr.colorSurface),
+                guide = primaryStrong,
+                tooltipBackground = themeColor(com.google.android.material.R.attr.colorSurface),
+                tooltipStroke = themeColor(com.google.android.material.R.attr.colorOutline),
+                tooltipTextPrimary = themeColor(android.R.attr.textColorPrimary),
+                tooltipTextSecondary = themeColor(android.R.attr.textColorSecondary),
             )
         }
 
-        private fun color(resId: Int): Int = ContextCompat.getColor(context, resId)
+        private fun themeColor(attrRes: Int): Int = ThemeAttrColorResolver.color(context, attrRes)
 
         private fun dp(value: Float): Float =
             TypedValue.applyDimension(

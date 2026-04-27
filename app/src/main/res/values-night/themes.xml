@@ -1,5 +1,12 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources>
     <style name="Base.Theme.VitaSense" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.VitaSense.Medium</item>
+        <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.VitaSense.Large</item>
+    </style>
+
+    <style name="Theme.VitaSense" parent="Theme.VitaSense.Default" />
+
+    <style name="Theme.VitaSense.Default" parent="Base.Theme.VitaSense">
         <item name="colorPrimary">@color/vs_dark_primary_500</item>
         <item name="colorOnPrimary">@color/vs_dark_text_primary</item>
         <item name="colorSecondary">@color/vs_dark_primary_400</item>
@@ -8,7 +15,78 @@
         <item name="colorOutline">@color/vs_dark_border_soft</item>
         <item name="android:textColorPrimary">@color/vs_dark_text_primary</item>
         <item name="android:textColorSecondary">@color/vs_dark_text_secondary</item>
-        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.VitaSense.Medium</item>
-        <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.VitaSense.Large</item>
+        <item name="vsColorPrimaryStrong">@color/vs_dark_primary_900</item>
+        <item name="vsColorPrimarySoft">@color/vs_dark_primary_100</item>
+        <item name="vsColorSecondaryAccent">@color/vs_dark_primary_400</item>
+        <item name="vsColorSurfaceAlt">@color/vs_dark_surface_alt</item>
+        <item name="vsColorWeekSignalTile">@color/vs_dark_week_signal_tile</item>
+        <item name="vsColorWeekSignalHrv">@color/vs_dark_week_signal_hrv</item>
+        <item name="vsColorWeekSignalHeartRate">@color/vs_dark_week_signal_hr</item>
+        <item name="vsColorWeekSignalSleep">@color/vs_dark_week_signal_sleep</item>
+        <item name="vsColorAlert">@color/vs_alert_red_dark</item>
+        <item name="vsColorTextTertiary">@color/vs_dark_text_tertiary</item>
+    </style>
+
+    <style name="Theme.VitaSense.OliveEmber" parent="Base.Theme.VitaSense">
+        <item name="colorPrimary">@color/vs_olive_ember_dark_primary</item>
+        <item name="colorOnPrimary">@color/vs_olive_ember_dark_background</item>
+        <item name="colorSecondary">@color/vs_olive_ember_dark_secondary</item>
+        <item name="colorSurface">@color/vs_olive_ember_dark_surface</item>
+        <item name="android:windowBackground">@color/vs_olive_ember_dark_background</item>
+        <item name="colorOutline">@color/vs_olive_ember_dark_border</item>
+        <item name="android:textColorPrimary">@color/vs_olive_ember_dark_text_primary</item>
+        <item name="android:textColorSecondary">@color/vs_olive_ember_dark_text_secondary</item>
+        <item name="vsColorPrimaryStrong">@color/vs_olive_ember_dark_primary_strong</item>
+        <item name="vsColorPrimarySoft">@color/vs_olive_ember_dark_primary_soft</item>
+        <item name="vsColorSecondaryAccent">@color/vs_olive_ember_dark_secondary</item>
+        <item name="vsColorSurfaceAlt">@color/vs_olive_ember_dark_surface_alt</item>
+        <item name="vsColorWeekSignalTile">@color/vs_olive_ember_dark_signal_tile</item>
+        <item name="vsColorWeekSignalHrv">@color/vs_olive_ember_dark_signal_hrv</item>
+        <item name="vsColorWeekSignalHeartRate">@color/vs_olive_ember_dark_signal_hr</item>
+        <item name="vsColorWeekSignalSleep">@color/vs_olive_ember_dark_signal_sleep</item>
+        <item name="vsColorAlert">@color/vs_alert_red_dark</item>
+        <item name="vsColorTextTertiary">@color/vs_olive_ember_dark_text_tertiary</item>
+    </style>
+
+    <style name="Theme.VitaSense.SunlitMeadow" parent="Base.Theme.VitaSense">
+        <item name="colorPrimary">@color/vs_sunlit_meadow_dark_primary</item>
+        <item name="colorOnPrimary">@color/vs_sunlit_meadow_dark_background</item>
+        <item name="colorSecondary">@color/vs_sunlit_meadow_dark_secondary</item>
+        <item name="colorSurface">@color/vs_sunlit_meadow_dark_surface</item>
+        <item name="android:windowBackground">@color/vs_sunlit_meadow_dark_background</item>
+        <item name="colorOutline">@color/vs_sunlit_meadow_dark_border</item>
+        <item name="android:textColorPrimary">@color/vs_sunlit_meadow_dark_text_primary</item>
+        <item name="android:textColorSecondary">@color/vs_sunlit_meadow_dark_text_secondary</item>
+        <item name="vsColorPrimaryStrong">@color/vs_sunlit_meadow_dark_primary_strong</item>
+        <item name="vsColorPrimarySoft">@color/vs_sunlit_meadow_dark_primary_soft</item>
+        <item name="vsColorSecondaryAccent">@color/vs_sunlit_meadow_dark_secondary</item>
+        <item name="vsColorSurfaceAlt">@color/vs_sunlit_meadow_dark_surface_alt</item>
+        <item name="vsColorWeekSignalTile">@color/vs_sunlit_meadow_dark_signal_tile</item>
+        <item name="vsColorWeekSignalHrv">@color/vs_sunlit_meadow_dark_signal_hrv</item>
+        <item name="vsColorWeekSignalHeartRate">@color/vs_sunlit_meadow_dark_signal_hr</item>
+        <item name="vsColorWeekSignalSleep">@color/vs_sunlit_meadow_dark_signal_sleep</item>
+        <item name="vsColorAlert">@color/vs_alert_red_dark</item>
+        <item name="vsColorTextTertiary">@color/vs_sunlit_meadow_dark_text_tertiary</item>
+    </style>
+
+    <style name="Theme.VitaSense.RoseIndigo" parent="Base.Theme.VitaSense">
+        <item name="colorPrimary">@color/vs_rose_indigo_dark_primary</item>
+        <item name="colorOnPrimary">@color/vs_rose_indigo_dark_background</item>
+        <item name="colorSecondary">@color/vs_rose_indigo_dark_secondary</item>
+        <item name="colorSurface">@color/vs_rose_indigo_dark_surface</item>
+        <item name="android:windowBackground">@color/vs_rose_indigo_dark_background</item>
+        <item name="colorOutline">@color/vs_rose_indigo_dark_border</item>
+        <item name="android:textColorPrimary">@color/vs_rose_indigo_dark_text_primary</item>
+        <item name="android:textColorSecondary">@color/vs_rose_indigo_dark_text_secondary</item>
+        <item name="vsColorPrimaryStrong">@color/vs_rose_indigo_dark_primary_strong</item>
+        <item name="vsColorPrimarySoft">@color/vs_rose_indigo_dark_primary_soft</item>
+        <item name="vsColorSecondaryAccent">@color/vs_rose_indigo_dark_secondary</item>
+        <item name="vsColorSurfaceAlt">@color/vs_rose_indigo_dark_surface_alt</item>
+        <item name="vsColorWeekSignalTile">@color/vs_rose_indigo_dark_signal_tile</item>
+        <item name="vsColorWeekSignalHrv">@color/vs_rose_indigo_dark_signal_hrv</item>
+        <item name="vsColorWeekSignalHeartRate">@color/vs_rose_indigo_dark_signal_hr</item>
+        <item name="vsColorWeekSignalSleep">@color/vs_rose_indigo_dark_signal_sleep</item>
+        <item name="vsColorAlert">@color/vs_alert_red_dark</item>
+        <item name="vsColorTextTertiary">@color/vs_rose_indigo_dark_text_tertiary</item>
     </style>
 </resources>
