@@ -4,8 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import org.wit.vitasense.AppContainer
 import org.wit.vitasense.ui.assessment.AssessmentViewModel
+import org.wit.vitasense.ui.auth.AuthViewModel
 import org.wit.vitasense.ui.dashboard.DashboardViewModel
 import org.wit.vitasense.ui.mood.MoodViewModel
+import org.wit.vitasense.ui.profile.ProfileViewModel
 import org.wit.vitasense.ui.settings.SettingsViewModel
 import org.wit.vitasense.ui.trends.TrendsViewModel
 
@@ -16,7 +18,10 @@ class VitaSenseViewModelFactory(
     override fun <T : ViewModel> create(modelClass: Class<T>): T =
         when {
             modelClass.isAssignableFrom(DashboardViewModel::class.java) ->
-                DashboardViewModel(appContainer.healthRepository) as T
+                DashboardViewModel(
+                    healthRepository = appContainer.healthRepository,
+                    authRepository = appContainer.authRepository,
+                ) as T
 
             modelClass.isAssignableFrom(AssessmentViewModel::class.java) ->
                 AssessmentViewModel(appContainer.healthRepository) as T
@@ -26,6 +31,16 @@ class VitaSenseViewModelFactory(
 
             modelClass.isAssignableFrom(MoodViewModel::class.java) ->
                 MoodViewModel(appContainer.moodRepository) as T
+
+            modelClass.isAssignableFrom(AuthViewModel::class.java) ->
+                AuthViewModel(appContainer.authRepository) as T
+
+            modelClass.isAssignableFrom(ProfileViewModel::class.java) ->
+                ProfileViewModel(
+                    authRepository = appContainer.authRepository,
+                    healthRepository = appContainer.healthRepository,
+                    settingsRepository = appContainer.settingsRepository,
+                ) as T
 
             modelClass.isAssignableFrom(SettingsViewModel::class.java) ->
                 SettingsViewModel(

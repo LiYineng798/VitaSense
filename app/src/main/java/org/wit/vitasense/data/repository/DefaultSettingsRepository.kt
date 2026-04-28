@@ -31,6 +31,22 @@ class DefaultSettingsRepository(
                 }
             }
 
+    override fun observeAuthBaseUrl(): Flow<String> =
+        appSettingDao.observe(AUTH_BASE_URL_KEY)
+            .map { entity -> entity?.value.orEmpty() }
+
+    override fun observeAuthToken(): Flow<String> =
+        appSettingDao.observe(AUTH_TOKEN_KEY)
+            .map { entity -> entity?.value.orEmpty() }
+
+    override fun observeCurrentUserJson(): Flow<String> =
+        appSettingDao.observe(CURRENT_USER_JSON_KEY)
+            .map { entity -> entity?.value.orEmpty() }
+
+    override fun observeCurrentUserId(): Flow<Long?> =
+        appSettingDao.observe(CURRENT_USER_ID_KEY)
+            .map { entity -> entity?.value?.toLongOrNull() }
+
     override suspend fun getThemeMode(): ThemeMode =
         when (appSettingDao.get(THEME_KEY)?.value?.lowercase()) {
             "dark" -> ThemeMode.DARK
@@ -44,6 +60,18 @@ class DefaultSettingsRepository(
             "rose_indigo" -> ThemeFamily.ROSE_INDIGO
             else -> ThemeFamily.DEFAULT
         }
+
+    override suspend fun getAuthBaseUrl(): String =
+        appSettingDao.get(AUTH_BASE_URL_KEY)?.value.orEmpty()
+
+    override suspend fun getAuthToken(): String =
+        appSettingDao.get(AUTH_TOKEN_KEY)?.value.orEmpty()
+
+    override suspend fun getCurrentUserJson(): String =
+        appSettingDao.get(CURRENT_USER_JSON_KEY)?.value.orEmpty()
+
+    override suspend fun getCurrentUserId(): Long? =
+        appSettingDao.get(CURRENT_USER_ID_KEY)?.value?.toLongOrNull()
 
     override suspend fun setThemeMode(mode: ThemeMode) {
         appSettingDao.upsert(
@@ -63,8 +91,48 @@ class DefaultSettingsRepository(
         )
     }
 
+    override suspend fun setAuthBaseUrl(baseUrl: String) {
+        appSettingDao.upsert(
+            AppSettingEntity(
+                key = AUTH_BASE_URL_KEY,
+                value = baseUrl.trim(),
+            ),
+        )
+    }
+
+    override suspend fun setAuthToken(token: String?) {
+        appSettingDao.upsert(
+            AppSettingEntity(
+                key = AUTH_TOKEN_KEY,
+                value = token.orEmpty(),
+            ),
+        )
+    }
+
+    override suspend fun setCurrentUserJson(userJson: String?) {
+        appSettingDao.upsert(
+            AppSettingEntity(
+                key = CURRENT_USER_JSON_KEY,
+                value = userJson.orEmpty(),
+            ),
+        )
+    }
+
+    override suspend fun setCurrentUserId(userId: Long?) {
+        appSettingDao.upsert(
+            AppSettingEntity(
+                key = CURRENT_USER_ID_KEY,
+                value = userId?.toString().orEmpty(),
+            ),
+        )
+    }
+
     private companion object {
         const val THEME_KEY = "theme_mode"
         const val THEME_FAMILY_KEY = "theme_family"
+        const val AUTH_BASE_URL_KEY = "auth_base_url"
+        const val AUTH_TOKEN_KEY = "auth_token"
+        const val CURRENT_USER_JSON_KEY = "current_user_json"
+        const val CURRENT_USER_ID_KEY = "current_user_id"
     }
 }

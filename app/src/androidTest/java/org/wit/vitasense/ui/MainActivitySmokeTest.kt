@@ -45,12 +45,12 @@ class MainActivitySmokeTest {
                 val currentRoot = navHostFragment.childFragmentManager.primaryNavigationFragment?.view
                 val homeLabel = activity.findViewById<TextView>(R.id.tabHomeLabel)
                 val trendsLabel = activity.findViewById<TextView>(R.id.tabTrendsLabel)
-                val assessmentLabel = activity.findViewById<TextView>(R.id.tabAssessmentLabel)
                 val moodLabel = activity.findViewById<TextView>(R.id.tabMoodLabel)
+                val profileLabel = activity.findViewById<TextView>(R.id.tabProfileLabel)
                 val home = activity.findViewById<View>(R.id.tabHome)
                 val trends = activity.findViewById<View>(R.id.tabTrends)
-                val assessment = activity.findViewById<View>(R.id.tabAssessment)
                 val mood = activity.findViewById<View>(R.id.tabMood)
+                val profile = activity.findViewById<View>(R.id.tabProfile)
                 val expectedContentBottomPadding =
                     includeRoot.height +
                         includeParams.bottomMargin +
@@ -62,8 +62,8 @@ class MainActivitySmokeTest {
 
                 val homeParams = home.layoutParams as LinearLayout.LayoutParams
                 val trendsParams = trends.layoutParams as LinearLayout.LayoutParams
-                val assessmentParams = assessment.layoutParams as LinearLayout.LayoutParams
                 val moodParams = mood.layoutParams as LinearLayout.LayoutParams
+                val profileParams = profile.layoutParams as LinearLayout.LayoutParams
                 val colorSurfaceAttr = TypedValue()
 
                 assertTrue(card.isShown)
@@ -82,16 +82,16 @@ class MainActivitySmokeTest {
                 assertEquals(expectedContentBottomPadding, currentRoot.paddingBottom)
                 assertEquals(1, homeLabel.maxLines)
                 assertEquals(1, trendsLabel.maxLines)
-                assertEquals(1, assessmentLabel.maxLines)
                 assertEquals(1, moodLabel.maxLines)
+                assertEquals(1, profileLabel.maxLines)
                 assertEquals(0, homeParams.width)
                 assertEquals(0, trendsParams.width)
-                assertEquals(0, assessmentParams.width)
                 assertEquals(0, moodParams.width)
+                assertEquals(0, profileParams.width)
                 assertEquals(1f, homeParams.weight, 0f)
                 assertEquals(1f, trendsParams.weight, 0f)
-                assertEquals(1f, assessmentParams.weight, 0f)
                 assertEquals(1f, moodParams.weight, 0f)
+                assertEquals(1f, profileParams.weight, 0f)
             }
         }
     }

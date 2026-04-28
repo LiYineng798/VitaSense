@@ -11,8 +11,8 @@ enum class BottomTabDestination(
 ) {
     HOME(R.id.dashboardFragment, R.id.tabHome, R.id.tabHomeIcon, R.id.tabHomeLabel),
     TRENDS(R.id.trendsFragment, R.id.tabTrends, R.id.tabTrendsIcon, R.id.tabTrendsLabel),
-    ASSESSMENT(R.id.assessmentFragment, R.id.tabAssessment, R.id.tabAssessmentIcon, R.id.tabAssessmentLabel),
     MOOD(R.id.moodFragment, R.id.tabMood, R.id.tabMoodIcon, R.id.tabMoodLabel),
+    PROFILE(R.id.profileFragment, R.id.tabProfile, R.id.tabProfileIcon, R.id.tabProfileLabel),
     ;
 
     companion object {

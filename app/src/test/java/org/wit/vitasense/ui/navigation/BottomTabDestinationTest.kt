@@ -10,8 +10,11 @@ class BottomTabDestinationTest {
     fun maps_nav_graph_destinations_to_bottom_tabs() {
         assertEquals(BottomTabDestination.HOME, BottomTabDestination.fromDestinationId(R.id.dashboardFragment))
         assertEquals(BottomTabDestination.TRENDS, BottomTabDestination.fromDestinationId(R.id.trendsFragment))
-        assertEquals(BottomTabDestination.ASSESSMENT, BottomTabDestination.fromDestinationId(R.id.assessmentFragment))
         assertEquals(BottomTabDestination.MOOD, BottomTabDestination.fromDestinationId(R.id.moodFragment))
+        assertEquals(BottomTabDestination.PROFILE, BottomTabDestination.fromDestinationId(R.id.profileFragment))
+        assertNull(BottomTabDestination.fromDestinationId(R.id.assessmentFragment))
+        assertNull(BottomTabDestination.fromDestinationId(R.id.authFragment))
+        assertNull(BottomTabDestination.fromDestinationId(R.id.appearanceFragment))
         assertNull(BottomTabDestination.fromDestinationId(R.id.settingsFragment))
     }
 }

@@ -25,6 +25,21 @@
         android:label="@string/nav_mood" />
 
     <fragment
+        android:id="@+id/profileFragment"
+        android:name="org.wit.vitasense.ui.profile.ProfileFragment"
+        android:label="@string/nav_profile" />
+
+    <fragment
+        android:id="@+id/authFragment"
+        android:name="org.wit.vitasense.ui.auth.AuthFragment"
+        android:label="@string/auth_title" />
+
+    <fragment
+        android:id="@+id/appearanceFragment"
+        android:name="org.wit.vitasense.ui.profile.AppearanceFragment"
+        android:label="@string/appearance_title" />
+
+    <fragment
         android:id="@+id/settingsFragment"
         android:name="org.wit.vitasense.ui.settings.SettingsFragment"
         android:label="@string/nav_settings" />

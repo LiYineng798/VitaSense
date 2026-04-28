@@ -18,3 +18,9 @@ local.properties
 
 /gradle-user-home/
 /gradle-user-home-fresh/
+/.gradle-user-home/
+/.android-user-home/
+
+/python_auth_api/__pycache__/
+/python_auth_api/auth.db
+*.pyc

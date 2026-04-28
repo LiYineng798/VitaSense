@@ -25,6 +25,7 @@ import org.wit.vitasense.model.ThemeFamily
 import org.wit.vitasense.databinding.ActivityMainBinding
 import org.wit.vitasense.model.ThemeMode
 import org.wit.vitasense.ui.navigation.BottomTabDestination
+import org.wit.vitasense.ui.navigation.FloatingTabShellDestinationPolicy
 import org.wit.vitasense.ui.navigation.BottomTabIndicatorGeometry
 import org.wit.vitasense.ui.navigation.IndicatorBounds
 import org.wit.vitasense.ui.navigation.LiquidIndicatorMotionPlanner
@@ -38,8 +39,11 @@ class MainActivity : AppCompatActivity(), TopLevelNavigator {
     private lateinit var navController: NavController
     private var selectedBottomDestination = BottomTabDestination.HOME
     private var currentContentBottomInsetPx = 0
+    private var currentSystemBottomInsetPx = 0
     private var appliedThemeFamily = ThemeFamily.DEFAULT
     private var appliedThemeMode = ThemeMode.LIGHT
+    private var areFloatingTabsVisible = true
+    private var hasAppliedDestinationShellState = false
     private val motionPlanner = LiquidIndicatorMotionPlanner()
     private val bottomTabIndicatorHorizontalInsetPx by lazy {
         resources.getDimension(R.dimen.vs_bottom_tab_indicator_horizontal_inset)
@@ -70,12 +74,10 @@ class MainActivity : AppCompatActivity(), TopLevelNavigator {
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.main) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            currentSystemBottomInsetPx = systemBars.bottom
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
             binding.floatingBottomTabs.root.post {
-                val bottomMargin =
-                    (binding.floatingBottomTabs.root.layoutParams as ViewGroup.MarginLayoutParams).bottomMargin
-                currentContentBottomInsetPx =
-                    binding.floatingBottomTabs.root.height + bottomMargin + systemBars.bottom
+                updateCurrentContentInset()
                 applyCurrentDestinationContentInset()
             }
             insets
@@ -93,6 +95,11 @@ class MainActivity : AppCompatActivity(), TopLevelNavigator {
                     renderBottomTabs(matched, animate = false)
                 }
             }
+            updateFloatingTabsVisibility(
+                show = FloatingTabShellDestinationPolicy.shouldShowFloatingTabs(destination.id),
+                animate = hasAppliedDestinationShellState,
+            )
+            hasAppliedDestinationShellState = true
             binding.navHost.post { applyCurrentDestinationContentInset() }
         }
 
@@ -160,11 +167,11 @@ class MainActivity : AppCompatActivity(), TopLevelNavigator {
         findViewById<View>(R.id.tabTrends).setOnClickListener {
             navigateToBottomDestination(BottomTabDestination.TRENDS)
         }
-        findViewById<View>(R.id.tabAssessment).setOnClickListener {
-            navigateToBottomDestination(BottomTabDestination.ASSESSMENT)
-        }
         findViewById<View>(R.id.tabMood).setOnClickListener {
             navigateToBottomDestination(BottomTabDestination.MOOD)
+        }
+        findViewById<View>(R.id.tabProfile).setOnClickListener {
+            navigateToBottomDestination(BottomTabDestination.PROFILE)
         }
     }
 
@@ -176,6 +183,68 @@ class MainActivity : AppCompatActivity(), TopLevelNavigator {
 
         contentRoot.clipToPadding = false
         contentRoot.updatePadding(bottom = currentContentBottomInsetPx)
+    }
+
+    private fun updateFloatingTabsVisibility(
+        show: Boolean,
+        animate: Boolean,
+    ) {
+        val tabsRoot = binding.floatingBottomTabs.root
+        val hiddenTranslationY = hiddenTabTranslationY()
+        areFloatingTabsVisible = show
+        updateCurrentContentInset()
+        applyCurrentDestinationContentInset()
+
+        if (!animate) {
+            tabsRoot.visibility = if (show) View.VISIBLE else View.INVISIBLE
+            tabsRoot.alpha = if (show) 1f else 0f
+            tabsRoot.translationY = if (show) 0f else hiddenTranslationY
+            tabsRoot.isEnabled = show
+            tabsRoot.isClickable = show
+            return
+        }
+
+        tabsRoot.animate().cancel()
+        if (show) {
+            tabsRoot.visibility = View.VISIBLE
+            tabsRoot.isEnabled = false
+            tabsRoot.isClickable = false
+            tabsRoot.animate()
+                .translationY(0f)
+                .alpha(1f)
+                .setDuration(220L)
+                .withEndAction {
+                    tabsRoot.isEnabled = true
+                    tabsRoot.isClickable = true
+                }.start()
+        } else {
+            tabsRoot.isEnabled = false
+            tabsRoot.isClickable = false
+            tabsRoot.animate()
+                .translationY(hiddenTranslationY)
+                .alpha(0f)
+                .setDuration(220L)
+                .withEndAction {
+                    tabsRoot.visibility = View.INVISIBLE
+                }.start()
+        }
+    }
+
+    private fun updateCurrentContentInset() {
+        currentContentBottomInsetPx =
+            if (areFloatingTabsVisible) {
+                val tabsRoot = binding.floatingBottomTabs.root
+                val bottomMargin = (tabsRoot.layoutParams as ViewGroup.MarginLayoutParams).bottomMargin
+                tabsRoot.height + bottomMargin + currentSystemBottomInsetPx
+            } else {
+                0
+            }
+    }
+
+    private fun hiddenTabTranslationY(): Float {
+        val tabsRoot = binding.floatingBottomTabs.root
+        val bottomMargin = (tabsRoot.layoutParams as ViewGroup.MarginLayoutParams).bottomMargin
+        return (tabsRoot.height + bottomMargin + currentSystemBottomInsetPx).toFloat()
     }
 
     private fun renderBottomTabs(

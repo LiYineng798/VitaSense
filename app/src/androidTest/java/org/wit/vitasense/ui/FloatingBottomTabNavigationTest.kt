@@ -21,13 +21,16 @@ class FloatingBottomTabNavigationTest {
     fun tapping_floating_tabs_opens_matching_top_level_screens() {
         ActivityScenario.launch(MainActivity::class.java)
 
+        onView(withId(R.id.tabHome)).perform(click())
+        onView(withText(R.string.dashboard_title)).check(matches(isDisplayed()))
+
         onView(withId(R.id.tabTrends)).perform(click())
         onView(withText(R.string.trends_title)).check(matches(isDisplayed()))
 
-        onView(withId(R.id.tabAssessment)).perform(click())
-        onView(withText(R.string.assessment_title)).check(matches(isDisplayed()))
-
         onView(withId(R.id.tabMood)).perform(click())
         onView(withText(R.string.mood_title)).check(matches(isDisplayed()))
+
+        onView(withId(R.id.tabProfile)).perform(click())
+        onView(withText(R.string.profile_title)).check(matches(isDisplayed()))
     }
 }

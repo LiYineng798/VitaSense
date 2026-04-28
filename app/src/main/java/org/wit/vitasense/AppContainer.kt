@@ -2,13 +2,16 @@ package org.wit.vitasense
 
 import android.content.Context
 import androidx.room.Room
+import kotlinx.coroutines.runBlocking
 import org.wit.vitasense.data.importer.DemoImportProvider
+import org.wit.vitasense.data.repository.DefaultAuthRepository
 import org.wit.vitasense.data.repository.DefaultHealthRepository
 import org.wit.vitasense.data.repository.DefaultMoodRepository
 import org.wit.vitasense.data.repository.DefaultSettingsRepository
 import org.wit.vitasense.db.AppDatabase
 import org.wit.vitasense.domain.DerivedContentSync
 import org.wit.vitasense.domain.HealthRecomputeEngine
+import org.wit.vitasense.repository.AuthRepository
 import org.wit.vitasense.repository.HealthRepository
 import org.wit.vitasense.repository.MoodRepository
 import org.wit.vitasense.repository.SettingsRepository
@@ -16,8 +19,14 @@ import org.wit.vitasense.repository.SettingsRepository
 class AppContainer(
     val context: Context,
 ) {
+    private companion object {
+        const val DEFAULT_AUTH_BASE_URL = "https://server.np5.top"
+    }
+
     private val database: AppDatabase by lazy {
-        Room.databaseBuilder(context, AppDatabase::class.java, "vitasense.db").build()
+        Room.databaseBuilder(context, AppDatabase::class.java, "vitasense.db")
+            .fallbackToDestructiveMigration()
+            .build()
     }
 
     private val demoImportProvider: DemoImportProvider by lazy {
@@ -42,6 +51,19 @@ class AppContainer(
 
     val settingsRepository: SettingsRepository by lazy {
         DefaultSettingsRepository(database.appSettingDao())
+            .also { repository ->
+                runBlocking {
+                    if (repository.getAuthBaseUrl().isBlank()) {
+                        repository.setAuthBaseUrl(DEFAULT_AUTH_BASE_URL)
+                    }
+                }
+            }
+    }
+
+    val authRepository: AuthRepository by lazy {
+        DefaultAuthRepository(
+            settingsRepository = settingsRepository,
+        )
     }
 
     val healthRepository: HealthRepository by lazy {

@@ -62,16 +62,6 @@ class DashboardFragment : Fragment() {
             }
         binding.trendPager.registerOnPageChangeCallback(trendPageChangeCallback!!)
 
-        binding.toolbar.inflateMenu(R.menu.dashboard_toolbar_menu)
-        binding.toolbar.setOnMenuItemClickListener {
-            if (it.itemId == R.id.action_settings) {
-                findNavController().navigate(R.id.settingsFragment)
-                true
-            } else {
-                false
-            }
-        }
-
         binding.quickMoodButton.setOnClickListener {
             navigateToBottomDestination(BottomTabDestination.MOOD)
         }
@@ -80,6 +70,15 @@ class DashboardFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.state.collect { state ->
                     binding.scoreValueText.text = state.totalScore
+                    binding.homeAuthAvatarText.text = state.authInitial
+                    binding.homeAuthStatusText.text = state.authPrompt
+                    binding.homeAuthEntry.setOnClickListener {
+                        if (state.isSignedIn) {
+                            navigateToBottomDestination(BottomTabDestination.PROFILE)
+                        } else {
+                            findNavController().navigate(R.id.authFragment)
+                        }
+                    }
                     trendPagerAdapter.submitPages(state.trendPages)
                     binding.trendPager.isUserInputEnabled = state.trendPages.size > 1
 

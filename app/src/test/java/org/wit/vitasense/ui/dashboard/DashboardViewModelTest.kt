@@ -15,9 +15,12 @@ import org.junit.Test
 import org.wit.vitasense.db.entity.DailyPhysiologySummaryEntity
 import org.wit.vitasense.db.entity.HeartRateRawSampleEntity
 import org.wit.vitasense.db.entity.RiskAssessmentRecordEntity
+import org.wit.vitasense.model.AuthResult
+import org.wit.vitasense.model.AuthUser
 import org.wit.vitasense.model.DemoBundleInfo
 import org.wit.vitasense.model.ImportOperationResult
 import org.wit.vitasense.model.ImportStatus
+import org.wit.vitasense.repository.AuthRepository
 import org.wit.vitasense.repository.HealthRepository
 
 class DashboardViewModelTest {
@@ -25,8 +28,12 @@ class DashboardViewModelTest {
     fun exposes_total_score_and_three_home_trend_pages() =
         runBlocking {
             val repository = FakeHealthRepository()
+            val authRepository =
+                FakeAuthRepository(
+                    AuthUser(1, "Ava Stone", "ava@example.com", "ava", "2000-01-02"),
+                )
             val scope = CoroutineScope(Job() + Dispatchers.Unconfined)
-            val viewModel = DashboardViewModel(repository, scope)
+            val viewModel = DashboardViewModel(repository, authRepository, scope)
             val collector = collectState(viewModel, scope)
 
             repository.summaries.value =
@@ -43,9 +50,13 @@ class DashboardViewModelTest {
             assertEquals("91", state.totalScore)
             assertEquals(3, state.trendPages.size)
             assertTrue(state.showTrendDots)
+            assertEquals(true, state.isSignedIn)
+            assertEquals("Welcome, Ava Stone!", state.authPrompt)
+            assertEquals("A", state.authInitial)
 
             collector.cancel()
             scope.coroutineContext[Job]?.cancel()
+            Unit
         }
 
     private fun collectState(
@@ -80,6 +91,29 @@ class DashboardViewModelTest {
         ): ImportOperationResult = ImportOperationResult(ImportStatus.SUCCESS, "unused", 0, 0, 0, 0)
 
         override suspend fun clearAllData() = Unit
+    }
+
+    private class FakeAuthRepository(
+        private val currentUser: AuthUser?,
+    ) : AuthRepository {
+        override fun observeCurrentUser(): Flow<AuthUser?> = flowOf(currentUser)
+
+        override suspend fun getCurrentUser(): AuthUser? = currentUser
+
+        override suspend fun register(
+            fullName: String,
+            email: String,
+            username: String,
+            password: String,
+            birthDate: String,
+        ): AuthResult = error("unused")
+
+        override suspend fun login(
+            identifier: String,
+            password: String,
+        ): AuthResult = error("unused")
+
+        override suspend fun logout() = Unit
     }
 
     private fun summary(

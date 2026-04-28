@@ -3,6 +3,7 @@ package org.wit.vitasense.ui.dashboard
 import org.wit.vitasense.db.entity.DailyPhysiologySummaryEntity
 import org.wit.vitasense.db.entity.RiskAssessmentRecordEntity
 import org.wit.vitasense.model.AnomalyFlag
+import org.wit.vitasense.model.AuthUser
 import org.wit.vitasense.model.TimeRange
 import org.wit.vitasense.ui.common.chart.TrendChartModel
 import org.wit.vitasense.ui.trends.TrendChartMetric
@@ -13,7 +14,17 @@ object DashboardHomeUiMapper {
     fun build(
         summaries: List<DailyPhysiologySummaryEntity>,
         latestRisk: RiskAssessmentRecordEntity?,
+        currentUser: AuthUser?,
     ): DashboardScreenState {
+        val isSignedIn = currentUser != null
+        val authPrompt =
+            currentUser?.fullName?.let { "Welcome, $it!" } ?: "Tap to sign in"
+        val authInitial =
+            currentUser?.fullName
+                ?.trim()
+                ?.firstOrNull()
+                ?.uppercase() ?: "?"
+
         val trendItems =
             summaries
                 .sortedBy { it.date }
@@ -25,6 +36,9 @@ object DashboardHomeUiMapper {
                 totalScore = latestRisk?.totalScore?.toString() ?: "--",
                 trendPages = listOf(DashboardTrendPageModel("7-Day Trend", TrendChartModel.Empty)),
                 showTrendDots = false,
+                isSignedIn = isSignedIn,
+                authPrompt = authPrompt,
+                authInitial = authInitial,
             )
         }
 
@@ -50,12 +64,18 @@ object DashboardHomeUiMapper {
                 totalScore = latestRisk?.totalScore?.toString() ?: "--",
                 trendPages = listOf(DashboardTrendPageModel("7-Day Trend", TrendChartModel.Empty)),
                 showTrendDots = false,
+                isSignedIn = isSignedIn,
+                authPrompt = authPrompt,
+                authInitial = authInitial,
             )
         } else {
             DashboardScreenState(
                 totalScore = latestRisk?.totalScore?.toString() ?: "--",
                 trendPages = pages,
                 showTrendDots = true,
+                isSignedIn = isSignedIn,
+                authPrompt = authPrompt,
+                authInitial = authInitial,
             )
         }
     }

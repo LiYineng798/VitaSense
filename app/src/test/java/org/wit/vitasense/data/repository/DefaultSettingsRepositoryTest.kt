@@ -41,6 +41,56 @@ class DefaultSettingsRepositoryTest {
         assertEquals(ThemeFamily.ROSE_INDIGO, repository.getThemeFamily())
         assertEquals(ThemeFamily.ROSE_INDIGO, repository.observeThemeFamily().first())
     }
+
+    @Test
+    fun persists_and_restores_auth_base_url() = runBlocking {
+        val dao = FakeAppSettingDao()
+        val repository = DefaultSettingsRepository(dao)
+
+        repository.setAuthBaseUrl("https://example.com/api")
+
+        assertEquals("https://example.com/api", repository.getAuthBaseUrl())
+        assertEquals("https://example.com/api", repository.observeAuthBaseUrl().first())
+        assertEquals("https://example.com/api", dao.snapshot()["auth_base_url"])
+    }
+
+    @Test
+    fun persists_and_clears_current_user_id() = runBlocking {
+        val dao = FakeAppSettingDao()
+        val repository = DefaultSettingsRepository(dao)
+
+        repository.setCurrentUserId(42L)
+        assertEquals(42L, repository.getCurrentUserId())
+        assertEquals(42L, repository.observeCurrentUserId().first())
+        assertEquals("42", dao.snapshot()["current_user_id"])
+
+        repository.setCurrentUserId(null)
+        assertEquals(null, repository.getCurrentUserId())
+        assertEquals(null, repository.observeCurrentUserId().first())
+        assertEquals("", dao.snapshot()["current_user_id"])
+    }
+
+    @Test
+    fun persists_and_clears_auth_token_and_current_user_json() = runBlocking {
+        val dao = FakeAppSettingDao()
+        val repository = DefaultSettingsRepository(dao)
+
+        repository.setAuthToken("token-123")
+        repository.setCurrentUserJson("""{"id":1}""")
+
+        assertEquals("token-123", repository.getAuthToken())
+        assertEquals("token-123", repository.observeAuthToken().first())
+        assertEquals("""{"id":1}""", repository.getCurrentUserJson())
+        assertEquals("""{"id":1}""", repository.observeCurrentUserJson().first())
+
+        repository.setAuthToken(null)
+        repository.setCurrentUserJson(null)
+
+        assertEquals("", repository.getAuthToken())
+        assertEquals("", repository.observeAuthToken().first())
+        assertEquals("", repository.getCurrentUserJson())
+        assertEquals("", repository.observeCurrentUserJson().first())
+    }
 }
 
 private class FakeAppSettingDao(

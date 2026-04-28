@@ -6,6 +6,7 @@ import org.wit.vitasense.db.dao.AppSettingDao
 import org.wit.vitasense.db.dao.DailySummaryDao
 import org.wit.vitasense.db.dao.HeartRateRawSampleDao
 import org.wit.vitasense.db.dao.ImportLogDao
+import org.wit.vitasense.db.dao.LocalUserDao
 import org.wit.vitasense.db.dao.MoodRecordDao
 import org.wit.vitasense.db.dao.RiskAssessmentDao
 import org.wit.vitasense.db.dao.SleepRecordDao
@@ -13,6 +14,7 @@ import org.wit.vitasense.db.entity.AppSettingEntity
 import org.wit.vitasense.db.entity.DailyPhysiologySummaryEntity
 import org.wit.vitasense.db.entity.HeartRateRawSampleEntity
 import org.wit.vitasense.db.entity.ImportLogEntity
+import org.wit.vitasense.db.entity.LocalUserEntity
 import org.wit.vitasense.db.entity.MoodRecordEntity
 import org.wit.vitasense.db.entity.RiskAssessmentRecordEntity
 import org.wit.vitasense.db.entity.SleepRecordEntity
@@ -26,8 +28,9 @@ import org.wit.vitasense.db.entity.SleepRecordEntity
         MoodRecordEntity::class,
         AppSettingEntity::class,
         ImportLogEntity::class,
+        LocalUserEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -38,4 +41,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun moodRecordDao(): MoodRecordDao
     abstract fun appSettingDao(): AppSettingDao
     abstract fun importLogDao(): ImportLogDao
+    abstract fun localUserDao(): LocalUserDao
 }

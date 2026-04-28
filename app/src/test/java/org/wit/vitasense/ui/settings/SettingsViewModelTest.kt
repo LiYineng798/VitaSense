@@ -53,14 +53,34 @@ class SettingsViewModelTest {
 private class FakeSettingsRepository : SettingsRepository {
     val themeMode = MutableStateFlow(ThemeMode.LIGHT)
     val themeFamily = MutableStateFlow(ThemeFamily.DEFAULT)
+    val authBaseUrl = MutableStateFlow("")
+    val authToken = MutableStateFlow("")
+    val currentUserJson = MutableStateFlow("")
+    val currentUserId = MutableStateFlow<Long?>(null)
 
     override fun observeThemeMode(): Flow<ThemeMode> = themeMode
 
     override fun observeThemeFamily(): Flow<ThemeFamily> = themeFamily
 
+    override fun observeAuthBaseUrl(): Flow<String> = authBaseUrl
+
+    override fun observeAuthToken(): Flow<String> = authToken
+
+    override fun observeCurrentUserJson(): Flow<String> = currentUserJson
+
+    override fun observeCurrentUserId(): Flow<Long?> = currentUserId
+
     override suspend fun getThemeMode(): ThemeMode = themeMode.value
 
     override suspend fun getThemeFamily(): ThemeFamily = themeFamily.value
+
+    override suspend fun getAuthBaseUrl(): String = authBaseUrl.value
+
+    override suspend fun getAuthToken(): String = authToken.value
+
+    override suspend fun getCurrentUserJson(): String = currentUserJson.value
+
+    override suspend fun getCurrentUserId(): Long? = currentUserId.value
 
     override suspend fun setThemeMode(mode: ThemeMode) {
         themeMode.value = mode
@@ -68,6 +88,22 @@ private class FakeSettingsRepository : SettingsRepository {
 
     override suspend fun setThemeFamily(family: ThemeFamily) {
         themeFamily.value = family
+    }
+
+    override suspend fun setAuthBaseUrl(baseUrl: String) {
+        authBaseUrl.value = baseUrl
+    }
+
+    override suspend fun setAuthToken(token: String?) {
+        authToken.value = token.orEmpty()
+    }
+
+    override suspend fun setCurrentUserJson(userJson: String?) {
+        currentUserJson.value = userJson.orEmpty()
+    }
+
+    override suspend fun setCurrentUserId(userId: Long?) {
+        currentUserId.value = userId
     }
 }
 

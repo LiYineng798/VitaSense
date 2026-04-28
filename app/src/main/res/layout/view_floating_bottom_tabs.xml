@@ -46,7 +46,7 @@
                     android:id="@+id/tabHomeIcon"
                     android:layout_width="18dp"
                     android:layout_height="18dp"
-                    android:src="@android:drawable/ic_menu_view" />
+                    android:src="@drawable/ic_tab_home" />
 
                 <TextView
                     android:id="@+id/tabHomeLabel"
@@ -101,40 +101,6 @@
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/tabAssessment"
-                android:layout_width="0dp"
-                android:layout_height="@dimen/vs_bottom_tab_item_height"
-                android:layout_weight="1"
-                android:contentDescription="@string/nav_assessment"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="8dp">
-
-                <ImageView
-                    android:id="@+id/tabAssessmentIcon"
-                    android:layout_width="18dp"
-                    android:layout_height="18dp"
-                    android:src="@android:drawable/ic_menu_info_details" />
-
-                <TextView
-                    android:id="@+id/tabAssessmentLabel"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:autoSizeMaxTextSize="11sp"
-                    android:autoSizeMinTextSize="9sp"
-                    android:autoSizeStepGranularity="1sp"
-                    android:autoSizeTextType="uniform"
-                    android:gravity="center"
-                    android:includeFontPadding="false"
-                    android:maxLines="1"
-                    android:text="@string/nav_assessment"
-                    android:textColor="?android:attr/textColorSecondary"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <LinearLayout
                 android:id="@+id/tabMood"
                 android:layout_width="0dp"
                 android:layout_height="@dimen/vs_bottom_tab_item_height"
@@ -163,6 +129,40 @@
                     android:includeFontPadding="false"
                     android:maxLines="1"
                     android:text="@string/nav_mood"
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/tabProfile"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/vs_bottom_tab_item_height"
+                android:layout_weight="1"
+                android:contentDescription="@string/nav_profile"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="8dp">
+
+                <ImageView
+                    android:id="@+id/tabProfileIcon"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@android:drawable/ic_menu_myplaces" />
+
+                <TextView
+                    android:id="@+id/tabProfileLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:autoSizeMaxTextSize="11sp"
+                    android:autoSizeMinTextSize="9sp"
+                    android:autoSizeStepGranularity="1sp"
+                    android:autoSizeTextType="uniform"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:maxLines="1"
+                    android:text="@string/nav_profile"
                     android:textColor="?android:attr/textColorSecondary"
                     android:textSize="11sp"
                     android:textStyle="bold" />

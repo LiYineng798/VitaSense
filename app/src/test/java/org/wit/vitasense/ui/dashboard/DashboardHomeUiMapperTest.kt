@@ -20,6 +20,7 @@ class DashboardHomeUiMapperTest {
                         summary("2026-04-21", sleepMinutes = 445, rmssd = 39.0, avgHeartRate = 62.0),
                     ),
                 latestRisk = risk(totalScore = 84),
+                currentUser = null,
             )
 
         assertEquals("84", state.totalScore)
@@ -33,7 +34,7 @@ class DashboardHomeUiMapperTest {
 
     @Test
     fun builds_fallback_score_and_single_empty_page_when_no_trend_data_exists() {
-        val state = DashboardHomeUiMapper.build(emptyList(), latestRisk = null)
+        val state = DashboardHomeUiMapper.build(emptyList(), latestRisk = null, currentUser = null)
 
         assertEquals("--", state.totalScore)
         assertEquals(1, state.trendPages.size)
@@ -53,6 +54,7 @@ class DashboardHomeUiMapperTest {
                         summary("2026-04-21", sleepMinutes = 445, rmssd = null, avgHeartRate = 62.0),
                     ),
                 latestRisk = risk(totalScore = 76),
+                currentUser = null,
             )
 
         assertEquals(3, state.trendPages.size)
@@ -72,6 +74,7 @@ class DashboardHomeUiMapperTest {
                         summary("2026-04-20", sleepMinutes = null, rmssd = null, avgHeartRate = null),
                     ),
                 latestRisk = risk(totalScore = 64),
+                currentUser = null,
             )
 
         assertEquals(1, state.trendPages.size)

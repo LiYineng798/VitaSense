@@ -43,6 +43,12 @@ class LiquidIndicatorFrameCalculator(
         durationMs: Long,
     ): Float {
         val adjusted = (elapsedMs - delayMs).coerceAtLeast(0L)
+        if (adjusted <= 0L) {
+            return 0f
+        }
+        if (adjusted >= durationMs) {
+            return 1f
+        }
         val linear = (adjusted.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f)
         return MotionEasing.fastOutSlowIn(linear)
     }
