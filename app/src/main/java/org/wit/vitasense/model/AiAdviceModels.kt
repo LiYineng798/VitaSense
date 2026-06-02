@@ -35,6 +35,18 @@ data class AiAdvice(
     val disclaimer: String,
 )
 
+data class AiHealthSummary(
+    val date: String,
+    val totalScore: Int?,
+    val riskLevel: String?,
+    val sleepMinutes: Int?,
+    val rmssd: Double?,
+    val restingHeartRate: Double?,
+    val avgHeartRate: Double?,
+    val anomalyFlags: List<String>,
+    val ruleSuggestion: String?,
+)
+
 sealed interface AiAdviceResult {
     data class Success(
         val advice: AiAdvice,

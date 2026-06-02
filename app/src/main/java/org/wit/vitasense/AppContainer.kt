@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import kotlinx.coroutines.runBlocking
 import org.wit.vitasense.data.importer.DemoImportProvider
+import org.wit.vitasense.data.repository.DefaultAiAdviceRepository
 import org.wit.vitasense.data.repository.DefaultAuthRepository
 import org.wit.vitasense.data.repository.DefaultHealthRepository
 import org.wit.vitasense.data.repository.DefaultMoodRepository
@@ -11,6 +12,7 @@ import org.wit.vitasense.data.repository.DefaultSettingsRepository
 import org.wit.vitasense.db.AppDatabase
 import org.wit.vitasense.domain.DerivedContentSync
 import org.wit.vitasense.domain.HealthRecomputeEngine
+import org.wit.vitasense.repository.AiAdviceRepository
 import org.wit.vitasense.repository.AuthRepository
 import org.wit.vitasense.repository.HealthRepository
 import org.wit.vitasense.repository.MoodRepository
@@ -21,6 +23,7 @@ class AppContainer(
 ) {
     private companion object {
         const val DEFAULT_AUTH_BASE_URL = "https://server.np5.top"
+        const val DEFAULT_AI_PROXY_BASE_URL = "https://server.np5.top"
     }
 
     private val database: AppDatabase by lazy {
@@ -64,6 +67,10 @@ class AppContainer(
         DefaultAuthRepository(
             settingsRepository = settingsRepository,
         )
+    }
+
+    val aiAdviceRepository: AiAdviceRepository by lazy {
+        DefaultAiAdviceRepository(proxyBaseUrl = DEFAULT_AI_PROXY_BASE_URL)
     }
 
     val healthRepository: HealthRepository by lazy {
