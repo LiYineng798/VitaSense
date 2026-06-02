@@ -53,6 +53,52 @@ class AiAdviceRequest(BaseModel):
     health_summary: HealthSummaryPayload
 
 
+class SyncSettingsPayload(BaseModel):
+    theme_mode: str
+    theme_family: str
+    updated_at: int
+
+
+class SyncMoodRecordPayload(BaseModel):
+    id: str
+    date: str
+    mood_type: str
+    mood_group: str
+    note: str | None = None
+    created_at: int
+    updated_at: int
+    deleted_at: int | None = None
+
+
+class SyncHeartRateSamplePayload(BaseModel):
+    id: str | None = None
+    sample_timestamp: int
+    date: str
+    heart_rate: int
+    source_batch_id: str
+    updated_at: int
+
+
+class SyncSleepRecordPayload(BaseModel):
+    id: str
+    date: str
+    start_at: int
+    end_at: int
+    duration_minutes: int
+    avg_heart_rate: float | None = None
+    heart_rate_variability_hint: float | None = None
+    source_batch_id: str
+    updated_at: int
+    deleted_at: int | None = None
+
+
+class SyncPushRequest(BaseModel):
+    settings: SyncSettingsPayload | None = None
+    mood_records: list[SyncMoodRecordPayload] = []
+    heart_rate_samples: list[SyncHeartRateSamplePayload] = []
+    sleep_records: list[SyncSleepRecordPayload] = []
+
+
 def get_connection() -> sqlite3.Connection:
     connection = sqlite3.connect(DB_PATH)
     connection.row_factory = sqlite3.Row
@@ -79,6 +125,62 @@ def initialize_database() -> None:
                 created_at INTEGER NOT NULL,
                 FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
             );
+
+            CREATE TABLE IF NOT EXISTS user_settings (
+                user_id INTEGER PRIMARY KEY,
+                theme_mode TEXT NOT NULL,
+                theme_family TEXT NOT NULL,
+                updated_at INTEGER NOT NULL,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS cloud_mood_records (
+                id TEXT PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                date TEXT NOT NULL,
+                mood_type TEXT NOT NULL,
+                mood_group TEXT NOT NULL,
+                note TEXT,
+                created_at INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL,
+                deleted_at INTEGER,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_cloud_mood_user_date
+            ON cloud_mood_records(user_id, date);
+
+            CREATE TABLE IF NOT EXISTS cloud_heart_rate_samples (
+                id TEXT PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                sample_timestamp INTEGER NOT NULL,
+                date TEXT NOT NULL,
+                heart_rate INTEGER NOT NULL,
+                source_batch_id TEXT NOT NULL,
+                updated_at INTEGER NOT NULL,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_cloud_hr_unique
+            ON cloud_heart_rate_samples(user_id, sample_timestamp, heart_rate, source_batch_id);
+
+            CREATE TABLE IF NOT EXISTS cloud_sleep_records (
+                id TEXT PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                date TEXT NOT NULL,
+                start_at INTEGER NOT NULL,
+                end_at INTEGER NOT NULL,
+                duration_minutes INTEGER NOT NULL,
+                avg_heart_rate REAL,
+                heart_rate_variability_hint REAL,
+                source_batch_id TEXT NOT NULL,
+                updated_at INTEGER NOT NULL,
+                deleted_at INTEGER,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_cloud_sleep_user_date
+            ON cloud_sleep_records(user_id, date);
             """.strip(),
         )
 
@@ -112,6 +214,20 @@ def create_session(connection: sqlite3.Connection, user_id: int) -> str:
         (token, user_id, int(time.time())),
     )
     return token
+
+
+def get_user_id_from_authorization(authorization: str | None) -> int | None:
+    if not authorization or not authorization.startswith("Bearer "):
+        return None
+    token = authorization.removeprefix("Bearer ").strip()
+    if not token:
+        return None
+    with get_connection() as connection:
+        row = connection.execute(
+            "SELECT user_id FROM sessions WHERE token = ?",
+            (token,),
+        ).fetchone()
+    return int(row["user_id"]) if row else None
 
 
 def invalid_response(status_code: int, message: str) -> JSONResponse:
