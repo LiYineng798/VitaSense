@@ -14,6 +14,8 @@ import org.junit.Test
 import org.wit.vitasense.db.entity.DailyPhysiologySummaryEntity
 import org.wit.vitasense.db.entity.HeartRateRawSampleEntity
 import org.wit.vitasense.db.entity.RiskAssessmentRecordEntity
+import org.wit.vitasense.model.AiAdvice
+import org.wit.vitasense.model.AiProviderConfig
 import org.wit.vitasense.model.DemoBundleInfo
 import org.wit.vitasense.model.ImportOperationResult
 import org.wit.vitasense.model.ImportStatus
@@ -57,6 +59,9 @@ private class FakeSettingsRepository : SettingsRepository {
     val authToken = MutableStateFlow("")
     val currentUserJson = MutableStateFlow("")
     val currentUserId = MutableStateFlow<Long?>(null)
+    val aiConfig = MutableStateFlow(AiProviderConfig())
+    val latestAiAdvice = MutableStateFlow<AiAdvice?>(null)
+    val latestAiAdviceGeneratedAt = MutableStateFlow<Long?>(null)
 
     override fun observeThemeMode(): Flow<ThemeMode> = themeMode
 
@@ -70,6 +75,12 @@ private class FakeSettingsRepository : SettingsRepository {
 
     override fun observeCurrentUserId(): Flow<Long?> = currentUserId
 
+    override fun observeAiProviderConfig(): Flow<AiProviderConfig> = aiConfig
+
+    override fun observeLatestAiAdvice(): Flow<AiAdvice?> = latestAiAdvice
+
+    override fun observeLatestAiAdviceGeneratedAt(): Flow<Long?> = latestAiAdviceGeneratedAt
+
     override suspend fun getThemeMode(): ThemeMode = themeMode.value
 
     override suspend fun getThemeFamily(): ThemeFamily = themeFamily.value
@@ -81,6 +92,12 @@ private class FakeSettingsRepository : SettingsRepository {
     override suspend fun getCurrentUserJson(): String = currentUserJson.value
 
     override suspend fun getCurrentUserId(): Long? = currentUserId.value
+
+    override suspend fun getAiProviderConfig(): AiProviderConfig = aiConfig.value
+
+    override suspend fun getLatestAiAdvice(): AiAdvice? = latestAiAdvice.value
+
+    override suspend fun getLatestAiAdviceGeneratedAt(): Long? = latestAiAdviceGeneratedAt.value
 
     override suspend fun setThemeMode(mode: ThemeMode) {
         themeMode.value = mode
@@ -104,6 +121,18 @@ private class FakeSettingsRepository : SettingsRepository {
 
     override suspend fun setCurrentUserId(userId: Long?) {
         currentUserId.value = userId
+    }
+
+    override suspend fun setAiProviderConfig(config: AiProviderConfig) {
+        aiConfig.value = config
+    }
+
+    override suspend fun setLatestAiAdvice(
+        advice: AiAdvice,
+        generatedAt: Long,
+    ) {
+        latestAiAdvice.value = advice
+        latestAiAdviceGeneratedAt.value = generatedAt
     }
 }
 

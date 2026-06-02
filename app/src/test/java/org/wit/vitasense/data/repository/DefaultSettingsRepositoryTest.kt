@@ -6,6 +6,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.wit.vitasense.model.AiAdvice
+import org.wit.vitasense.model.AiProvider
+import org.wit.vitasense.model.AiProviderConfig
 import org.wit.vitasense.db.dao.AppSettingDao
 import org.wit.vitasense.db.entity.AppSettingEntity
 import org.wit.vitasense.model.ThemeFamily
@@ -90,6 +93,48 @@ class DefaultSettingsRepositoryTest {
         assertEquals("", repository.observeAuthToken().first())
         assertEquals("", repository.getCurrentUserJson())
         assertEquals("", repository.observeCurrentUserJson().first())
+    }
+
+    @Test
+    fun persists_and_restores_ai_configuration() = runBlocking {
+        val dao = FakeAppSettingDao()
+        val repository = DefaultSettingsRepository(dao)
+        val config =
+            AiProviderConfig(
+                provider = AiProvider.DEEPSEEK,
+                apiKey = "sk-user",
+                baseUrl = "https://api.deepseek.com",
+                model = "deepseek-chat",
+            )
+
+        repository.setAiProviderConfig(config)
+
+        assertEquals(config, repository.getAiProviderConfig())
+        assertEquals(config, repository.observeAiProviderConfig().first())
+        assertEquals("deepseek", dao.snapshot()["ai_provider"])
+        assertEquals("sk-user", dao.snapshot()["ai_api_key"])
+    }
+
+    @Test
+    fun persists_and_restores_latest_ai_advice() = runBlocking {
+        val dao = FakeAppSettingDao()
+        val repository = DefaultSettingsRepository(dao)
+        val advice =
+            AiAdvice(
+                summary = "Recovery looks stable.",
+                recommendations = listOf("Keep training light.", "Prioritize sleep."),
+                riskNote = "Sleep was slightly short.",
+                disclaimer = "This is wellness support, not medical diagnosis.",
+            )
+
+        repository.setLatestAiAdvice(
+            advice = advice,
+            generatedAt = 1_779_999_000_000L,
+        )
+
+        assertEquals(advice, repository.getLatestAiAdvice())
+        assertEquals(advice, repository.observeLatestAiAdvice().first())
+        assertEquals(1_779_999_000_000L, repository.observeLatestAiAdviceGeneratedAt().first())
     }
 }
 
