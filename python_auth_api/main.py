@@ -207,6 +207,29 @@ def serialize_user(row: sqlite3.Row) -> dict:
     }
 
 
+def now_millis() -> int:
+    return int(time.time() * 1000)
+
+
+def serialize_sync_settings(row: sqlite3.Row | None) -> dict[str, Any] | None:
+    if row is None:
+        return None
+    return {
+        "theme_mode": row["theme_mode"],
+        "theme_family": row["theme_family"],
+        "updated_at": row["updated_at"],
+    }
+
+
+def serialize_sync_row(row: sqlite3.Row, fields: list[str]) -> dict[str, Any]:
+    return {field: row[field] for field in fields}
+
+
+def stable_heart_rate_id(user_id: int, sample: SyncHeartRateSamplePayload) -> str:
+    raw = f"{user_id}:{sample.sample_timestamp}:{sample.heart_rate}:{sample.source_batch_id}"
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
 def create_session(connection: sqlite3.Connection, user_id: int) -> str:
     token = secrets.token_urlsafe(32)
     connection.execute(
@@ -431,6 +454,184 @@ def me(authorization: str | None = Header(default=None)):
         "message": "Current user resolved.",
         "user": serialize_user(session_row),
     }
+
+
+@app.get("/api/v1/sync/bootstrap")
+def sync_bootstrap(authorization: str | None = Header(default=None)):
+    user_id = get_user_id_from_authorization(authorization)
+    if user_id is None:
+        return invalid_response(401, "Missing or invalid session token.")
+
+    with get_connection() as connection:
+        settings = connection.execute(
+            "SELECT theme_mode, theme_family, updated_at FROM user_settings WHERE user_id = ?",
+            (user_id,),
+        ).fetchone()
+        mood_rows = connection.execute(
+            """
+            SELECT id, date, mood_type, mood_group, note, created_at, updated_at, deleted_at
+            FROM cloud_mood_records
+            WHERE user_id = ?
+            ORDER BY created_at ASC
+            """,
+            (user_id,),
+        ).fetchall()
+        hr_rows = connection.execute(
+            """
+            SELECT id, sample_timestamp, date, heart_rate, source_batch_id, updated_at
+            FROM cloud_heart_rate_samples
+            WHERE user_id = ?
+            ORDER BY sample_timestamp ASC
+            """,
+            (user_id,),
+        ).fetchall()
+        sleep_rows = connection.execute(
+            """
+            SELECT id, date, start_at, end_at, duration_minutes, avg_heart_rate,
+                   heart_rate_variability_hint, source_batch_id, updated_at, deleted_at
+            FROM cloud_sleep_records
+            WHERE user_id = ?
+            ORDER BY date ASC
+            """,
+            (user_id,),
+        ).fetchall()
+
+    return {
+        "success": True,
+        "server_time": now_millis(),
+        "settings": serialize_sync_settings(settings),
+        "mood_records": [
+            serialize_sync_row(row, ["id", "date", "mood_type", "mood_group", "note", "created_at", "updated_at", "deleted_at"])
+            for row in mood_rows
+        ],
+        "heart_rate_samples": [
+            serialize_sync_row(row, ["id", "sample_timestamp", "date", "heart_rate", "source_batch_id", "updated_at"])
+            for row in hr_rows
+        ],
+        "sleep_records": [
+            serialize_sync_row(
+                row,
+                [
+                    "id",
+                    "date",
+                    "start_at",
+                    "end_at",
+                    "duration_minutes",
+                    "avg_heart_rate",
+                    "heart_rate_variability_hint",
+                    "source_batch_id",
+                    "updated_at",
+                    "deleted_at",
+                ],
+            )
+            for row in sleep_rows
+        ],
+    }
+
+
+@app.post("/api/v1/sync/push")
+def sync_push(payload: SyncPushRequest, authorization: str | None = Header(default=None)):
+    user_id = get_user_id_from_authorization(authorization)
+    if user_id is None:
+        return invalid_response(401, "Missing or invalid session token.")
+
+    with get_connection() as connection:
+        if payload.settings is not None:
+            existing = connection.execute(
+                "SELECT updated_at FROM user_settings WHERE user_id = ?",
+                (user_id,),
+            ).fetchone()
+            if existing is None or payload.settings.updated_at > existing["updated_at"]:
+                connection.execute(
+                    """
+                    INSERT INTO user_settings(user_id, theme_mode, theme_family, updated_at)
+                    VALUES (?, ?, ?, ?)
+                    ON CONFLICT(user_id) DO UPDATE SET
+                        theme_mode = excluded.theme_mode,
+                        theme_family = excluded.theme_family,
+                        updated_at = excluded.updated_at
+                    """,
+                    (user_id, payload.settings.theme_mode, payload.settings.theme_family, payload.settings.updated_at),
+                )
+
+        for mood in payload.mood_records:
+            existing = connection.execute(
+                "SELECT updated_at, deleted_at FROM cloud_mood_records WHERE id = ? AND user_id = ?",
+                (mood.id, user_id),
+            ).fetchone()
+            incoming_delete = mood.deleted_at or 0
+            existing_delete = (existing["deleted_at"] or 0) if existing else 0
+            should_write = existing is None or mood.updated_at > existing["updated_at"] or incoming_delete > existing_delete
+            if should_write:
+                connection.execute(
+                    """
+                    INSERT INTO cloud_mood_records(id, user_id, date, mood_type, mood_group, note, created_at, updated_at, deleted_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(id) DO UPDATE SET
+                        date = excluded.date,
+                        mood_type = excluded.mood_type,
+                        mood_group = excluded.mood_group,
+                        note = excluded.note,
+                        created_at = excluded.created_at,
+                        updated_at = excluded.updated_at,
+                        deleted_at = excluded.deleted_at
+                    """,
+                    (mood.id, user_id, mood.date, mood.mood_type, mood.mood_group, mood.note, mood.created_at, mood.updated_at, mood.deleted_at),
+                )
+
+        for sample in payload.heart_rate_samples:
+            sample_id = sample.id or stable_heart_rate_id(user_id, sample)
+            connection.execute(
+                """
+                INSERT OR IGNORE INTO cloud_heart_rate_samples(id, user_id, sample_timestamp, date, heart_rate, source_batch_id, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (sample_id, user_id, sample.sample_timestamp, sample.date, sample.heart_rate, sample.source_batch_id, sample.updated_at),
+            )
+
+        for sleep in payload.sleep_records:
+            existing = connection.execute(
+                "SELECT updated_at, duration_minutes FROM cloud_sleep_records WHERE user_id = ? AND date = ?",
+                (user_id, sleep.date),
+            ).fetchone()
+            should_write = (
+                existing is None
+                or sleep.updated_at > existing["updated_at"]
+                or (sleep.updated_at == existing["updated_at"] and sleep.duration_minutes > existing["duration_minutes"])
+            )
+            if should_write:
+                connection.execute(
+                    """
+                    INSERT INTO cloud_sleep_records(id, user_id, date, start_at, end_at, duration_minutes,
+                                                    avg_heart_rate, heart_rate_variability_hint, source_batch_id, updated_at, deleted_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(user_id, date) DO UPDATE SET
+                        id = excluded.id,
+                        start_at = excluded.start_at,
+                        end_at = excluded.end_at,
+                        duration_minutes = excluded.duration_minutes,
+                        avg_heart_rate = excluded.avg_heart_rate,
+                        heart_rate_variability_hint = excluded.heart_rate_variability_hint,
+                        source_batch_id = excluded.source_batch_id,
+                        updated_at = excluded.updated_at,
+                        deleted_at = excluded.deleted_at
+                    """,
+                    (
+                        sleep.id,
+                        user_id,
+                        sleep.date,
+                        sleep.start_at,
+                        sleep.end_at,
+                        sleep.duration_minutes,
+                        sleep.avg_heart_rate,
+                        sleep.heart_rate_variability_hint,
+                        sleep.source_batch_id,
+                        sleep.updated_at,
+                        sleep.deleted_at,
+                    ),
+                )
+
+    return {"success": True, "server_time": now_millis(), "message": "Sync complete."}
 
 
 @app.post("/api/v1/ai/advice")

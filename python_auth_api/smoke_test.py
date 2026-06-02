@@ -6,12 +6,15 @@ import urllib.request
 BASE_URL = "http://127.0.0.1:8000"
 
 
-def request_json(path: str, payload=None, token: str | None = None):
+def request_json(path: str, payload=None, token: str | None = None, headers: dict[str, str] | None = None):
     data = None if payload is None else json.dumps(payload).encode("utf-8")
+    request_headers = {"Content-Type": "application/json"}
+    if headers:
+        request_headers.update(headers)
     request = urllib.request.Request(
         url=f"{BASE_URL}{path}",
         data=data,
-        headers={"Content-Type": "application/json"},
+        headers=request_headers,
         method="POST" if payload is not None else "GET",
     )
     if token:
@@ -21,12 +24,20 @@ def request_json(path: str, payload=None, token: str | None = None):
         return response.status, json.loads(response.read().decode("utf-8"))
 
 
-def expect_http_error(path: str, payload):
+def auth_headers(token: str) -> dict[str, str]:
+    return {"Authorization": f"Bearer {token}"}
+
+
+def expect_http_error(path: str, payload=None, headers: dict[str, str] | None = None):
+    data = None if payload is None else json.dumps(payload).encode("utf-8")
+    request_headers = {"Content-Type": "application/json"}
+    if headers:
+        request_headers.update(headers)
     request = urllib.request.Request(
         url=f"{BASE_URL}{path}",
-        data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
-        method="POST",
+        data=data,
+        headers=request_headers,
+        method="POST" if payload is not None else "GET",
     )
     try:
         urllib.request.urlopen(request, timeout=10)
@@ -73,6 +84,71 @@ def run_ai_validation_checks():
     expect_ai_error(missing_base_url, 400, "missing_base_url")
 
 
+def run_sync_checks(token_a: str, token_b: str):
+    sync_payload = {
+        "settings": {"theme_mode": "dark", "theme_family": "rose_indigo", "updated_at": 1770000000000},
+        "mood_records": [
+            {
+                "id": "mood-a-1",
+                "date": "2026-06-02",
+                "mood_type": "CALM",
+                "mood_group": "POSITIVE",
+                "note": "steady",
+                "created_at": 1770000000000,
+                "updated_at": 1770000000000,
+                "deleted_at": None,
+            }
+        ],
+        "heart_rate_samples": [
+            {
+                "id": "hr-a-1",
+                "sample_timestamp": 1770000000000,
+                "date": "2026-06-02",
+                "heart_rate": 72,
+                "source_batch_id": "demo",
+                "updated_at": 1770000000000,
+            },
+            {
+                "id": "hr-a-duplicate",
+                "sample_timestamp": 1770000000000,
+                "date": "2026-06-02",
+                "heart_rate": 72,
+                "source_batch_id": "demo",
+                "updated_at": 1770000000001,
+            },
+        ],
+        "sleep_records": [
+            {
+                "id": "sleep-a-1",
+                "date": "2026-06-02",
+                "start_at": 1769971200000,
+                "end_at": 1769996400000,
+                "duration_minutes": 420,
+                "avg_heart_rate": 61.0,
+                "heart_rate_variability_hint": 38.0,
+                "source_batch_id": "demo",
+                "updated_at": 1770000000000,
+                "deleted_at": None,
+            }
+        ],
+    }
+    missing_status, missing_body = expect_http_error("/api/v1/sync/bootstrap")
+    assert missing_status == 401, missing_body
+
+    push_status, push_body = request_json("/api/v1/sync/push", sync_payload, headers=auth_headers(token_a))
+    assert push_status == 200, push_body
+    assert push_body["success"] is True
+
+    bootstrap_a_status, bootstrap_a = request_json("/api/v1/sync/bootstrap", headers=auth_headers(token_a))
+    assert bootstrap_a_status == 200, bootstrap_a
+    assert bootstrap_a["settings"]["theme_mode"] == "dark"
+    assert len(bootstrap_a["heart_rate_samples"]) == 1
+
+    bootstrap_b_status, bootstrap_b = request_json("/api/v1/sync/bootstrap", headers=auth_headers(token_b))
+    assert bootstrap_b_status == 200, bootstrap_b
+    assert bootstrap_b["mood_records"] == []
+
+
 def main():
     suffix = str(time.time_ns())
     register_payload = {
@@ -92,6 +168,17 @@ def main():
     assert register_body["success"] is True
     token = register_body["token"]
 
+    register_payload_b = {
+        "full_name": "Ben Stone",
+        "email": f"ben-{suffix}@example.com",
+        "username": f"ben-{suffix}",
+        "password": "password123",
+        "birth_date": "2001-01-02",
+    }
+    register_b_status, register_b_body = request_json("/api/v1/auth/register", register_payload_b)
+    assert register_b_status == 200, register_b_body
+    token_b = register_b_body["token"]
+
     duplicate_status, duplicate_body = expect_http_error("/api/v1/auth/register", register_payload)
     assert duplicate_status == 409, duplicate_body
 
@@ -110,6 +197,7 @@ def main():
     assert me_body["user"]["email"] == register_payload["email"], me_body
 
     run_ai_validation_checks()
+    run_sync_checks(token, token_b)
 
 
 if __name__ == "__main__":
