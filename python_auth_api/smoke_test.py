@@ -35,6 +35,44 @@ def expect_http_error(path: str, payload):
     raise AssertionError("Expected HTTP error response")
 
 
+def expect_ai_error(payload, expected_status: int, expected_code: str):
+    status, body = expect_http_error("/api/v1/ai/advice", payload)
+    assert status == expected_status, body
+    assert body["success"] is False, body
+    assert body["code"] == expected_code, body
+
+
+def run_ai_validation_checks():
+    base_payload = {
+        "provider": "deepseek",
+        "base_url": "https://api.deepseek.com",
+        "model": "deepseek-chat",
+        "api_key": "sk-test",
+        "health_summary": {
+            "date": "2026-06-02",
+            "total_score": 82,
+            "risk_level": "low",
+            "sleep_minutes": 430,
+            "rmssd": 35.2,
+            "resting_heart_rate": 61.0,
+            "avg_heart_rate": 65.0,
+            "anomaly_flags": [],
+            "rule_suggestion": "Keep the current pace.",
+        },
+    }
+    missing_key = dict(base_payload)
+    missing_key["api_key"] = ""
+    expect_ai_error(missing_key, 400, "missing_api_key")
+
+    missing_model = dict(base_payload)
+    missing_model["model"] = ""
+    expect_ai_error(missing_model, 400, "missing_model")
+
+    missing_base_url = dict(base_payload)
+    missing_base_url["base_url"] = ""
+    expect_ai_error(missing_base_url, 400, "missing_base_url")
+
+
 def main():
     suffix = str(time.time_ns())
     register_payload = {
@@ -70,6 +108,8 @@ def main():
     me_status, me_body = request_json("/api/v1/auth/me", token=token)
     assert me_status == 200, me_body
     assert me_body["user"]["email"] == register_payload["email"], me_body
+
+    run_ai_validation_checks()
 
 
 if __name__ == "__main__":
