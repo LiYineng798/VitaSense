@@ -2,6 +2,8 @@ package org.wit.vitasense.ui.dashboard
 
 import org.wit.vitasense.db.entity.DailyPhysiologySummaryEntity
 import org.wit.vitasense.db.entity.RiskAssessmentRecordEntity
+import org.wit.vitasense.model.AiAdvice
+import org.wit.vitasense.model.AiProviderConfig
 import org.wit.vitasense.model.AnomalyFlag
 import org.wit.vitasense.model.AuthUser
 import org.wit.vitasense.model.TimeRange
@@ -15,6 +17,11 @@ object DashboardHomeUiMapper {
         summaries: List<DailyPhysiologySummaryEntity>,
         latestRisk: RiskAssessmentRecordEntity?,
         currentUser: AuthUser?,
+        aiConfig: AiProviderConfig = AiProviderConfig(),
+        latestAiAdvice: AiAdvice? = null,
+        latestAiAdviceGeneratedAt: Long? = null,
+        isAiLoading: Boolean = false,
+        aiErrorText: String? = null,
     ): DashboardScreenState {
         val isSignedIn = currentUser != null
         val authPrompt =
@@ -39,6 +46,7 @@ object DashboardHomeUiMapper {
                 isSignedIn = isSignedIn,
                 authPrompt = authPrompt,
                 authInitial = authInitial,
+                aiAdvice = buildAiState(aiConfig, latestAiAdvice, isAiLoading, aiErrorText),
             )
         }
 
@@ -67,6 +75,7 @@ object DashboardHomeUiMapper {
                 isSignedIn = isSignedIn,
                 authPrompt = authPrompt,
                 authInitial = authInitial,
+                aiAdvice = buildAiState(aiConfig, latestAiAdvice, isAiLoading, aiErrorText),
             )
         } else {
             DashboardScreenState(
@@ -76,9 +85,48 @@ object DashboardHomeUiMapper {
                 isSignedIn = isSignedIn,
                 authPrompt = authPrompt,
                 authInitial = authInitial,
+                aiAdvice = buildAiState(aiConfig, latestAiAdvice, isAiLoading, aiErrorText),
             )
         }
     }
+
+    private fun buildAiState(
+        aiConfig: AiProviderConfig,
+        latestAiAdvice: AiAdvice?,
+        isAiLoading: Boolean,
+        aiErrorText: String?,
+    ): DashboardAiAdviceState =
+        when {
+            aiConfig.apiKey.isBlank() -> DashboardAiAdviceState()
+            isAiLoading ->
+                DashboardAiAdviceState(
+                    statusText = "Generating personalized advice...",
+                    actionText = "Generating...",
+                    showProgress = true,
+                    canGenerate = false,
+                    shouldOpenSettings = false,
+                )
+            latestAiAdvice != null ->
+                DashboardAiAdviceState(
+                    statusText = "Latest generated advice",
+                    summary = latestAiAdvice.summary,
+                    recommendations = latestAiAdvice.recommendations,
+                    riskNote = latestAiAdvice.riskNote,
+                    disclaimer = latestAiAdvice.disclaimer,
+                    actionText = "Refresh advice",
+                    canGenerate = true,
+                    shouldOpenSettings = false,
+                    errorText = aiErrorText,
+                )
+            else ->
+                DashboardAiAdviceState(
+                    statusText = "Generate advice from today's health data.",
+                    actionText = "Generate advice",
+                    canGenerate = true,
+                    shouldOpenSettings = false,
+                    errorText = aiErrorText,
+                )
+        }
 
     private fun DailyPhysiologySummaryEntity.toTrendSummaryItem() =
         TrendSummaryItem(
