@@ -15,6 +15,7 @@ import org.wit.vitasense.db.entity.DailyPhysiologySummaryEntity
 import org.wit.vitasense.db.entity.HeartRateRawSampleEntity
 import org.wit.vitasense.db.entity.RiskAssessmentRecordEntity
 import org.wit.vitasense.model.AiAdvice
+import org.wit.vitasense.model.AiProvider
 import org.wit.vitasense.model.AiProviderConfig
 import org.wit.vitasense.model.DemoBundleInfo
 import org.wit.vitasense.model.ImportOperationResult
@@ -50,6 +51,25 @@ class SettingsViewModelTest {
             scope.coroutineContext[Job]?.cancel()
         }
     }
+
+    @Test
+    fun persists_ai_provider_settings() =
+        runBlocking {
+            val repository = FakeSettingsRepository()
+            val scope = CoroutineScope(Job() + Dispatchers.Unconfined)
+            val viewModel = SettingsViewModel(FakeHealthRepository(), repository, scope)
+
+            viewModel.saveAiSettings(
+                provider = AiProvider.OPENAI_COMPATIBLE,
+                apiKey = "sk-custom",
+                baseUrl = "https://api.example.com/v1",
+                model = "custom-model",
+            )
+            yield()
+
+            assertEquals(AiProvider.OPENAI_COMPATIBLE, repository.aiConfig.value.provider)
+            assertEquals("sk-custom", repository.aiConfig.value.apiKey)
+        }
 }
 
 private class FakeSettingsRepository : SettingsRepository {

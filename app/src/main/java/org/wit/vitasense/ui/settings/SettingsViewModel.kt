@@ -11,6 +11,8 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import org.wit.vitasense.model.AiProvider
+import org.wit.vitasense.model.AiProviderConfig
 import org.wit.vitasense.model.DemoBundleInfo
 import org.wit.vitasense.model.ThemeFamily
 import org.wit.vitasense.model.ThemeMode
@@ -46,6 +48,14 @@ class SettingsViewModel(
                 initialValue = ThemeFamily.DEFAULT,
             )
 
+    val aiConfig: StateFlow<AiProviderConfig> =
+        settingsRepository.observeAiProviderConfig()
+            .stateIn(
+                scope = modelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = AiProviderConfig(),
+            )
+
     init {
         modelScope.launch {
             _demoBundles.value = healthRepository.getAvailableDemoBundles()
@@ -79,6 +89,25 @@ class SettingsViewModel(
         modelScope.launch {
             healthRepository.clearAllData()
             _events.emit(UiEvent.Message("All local data has been deleted."))
+        }
+    }
+
+    fun saveAiSettings(
+        provider: AiProvider,
+        apiKey: String,
+        baseUrl: String,
+        model: String,
+    ) {
+        modelScope.launch {
+            settingsRepository.setAiProviderConfig(
+                AiProviderConfig(
+                    provider = provider,
+                    apiKey = apiKey,
+                    baseUrl = baseUrl.ifBlank { provider.defaultBaseUrl },
+                    model = model.ifBlank { provider.defaultModel },
+                ),
+            )
+            _events.emit(UiEvent.Message("AI settings saved."))
         }
     }
 }

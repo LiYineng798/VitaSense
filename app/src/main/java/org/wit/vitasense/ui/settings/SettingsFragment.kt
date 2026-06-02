@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 import org.wit.vitasense.R
 import org.wit.vitasense.VitaSenseApplication
 import org.wit.vitasense.databinding.FragmentSettingsBinding
+import org.wit.vitasense.model.AiProvider
 import org.wit.vitasense.model.UiEvent
 import org.wit.vitasense.ui.common.VitaSenseViewModelFactory
 
@@ -55,6 +56,20 @@ class SettingsFragment : Fragment() {
                     viewModel.clearAllData()
                 }.show()
         }
+        binding.saveAiSettingsButton.setOnClickListener {
+            val provider =
+                if (binding.aiProviderCustom.isChecked) {
+                    AiProvider.OPENAI_COMPATIBLE
+                } else {
+                    AiProvider.DEEPSEEK
+                }
+            viewModel.saveAiSettings(
+                provider = provider,
+                apiKey = binding.aiApiKeyInput.text?.toString().orEmpty(),
+                baseUrl = binding.aiBaseUrlInput.text?.toString().orEmpty(),
+                model = binding.aiModelInput.text?.toString().orEmpty(),
+            )
+        }
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -68,6 +83,23 @@ class SettingsFragment : Fragment() {
                                     setOnClickListener { viewModel.importDemo(bundle.id) }
                                 }
                             binding.demoImportContainer.addView(button)
+                        }
+                    }
+                }
+                launch {
+                    viewModel.aiConfig.collect { config ->
+                        when (config.provider) {
+                            AiProvider.DEEPSEEK -> binding.aiProviderDeepSeek.isChecked = true
+                            AiProvider.OPENAI_COMPATIBLE -> binding.aiProviderCustom.isChecked = true
+                        }
+                        if (binding.aiApiKeyInput.text?.toString() != config.apiKey) {
+                            binding.aiApiKeyInput.setText(config.apiKey)
+                        }
+                        if (binding.aiBaseUrlInput.text?.toString() != config.baseUrl) {
+                            binding.aiBaseUrlInput.setText(config.baseUrl)
+                        }
+                        if (binding.aiModelInput.text?.toString() != config.model) {
+                            binding.aiModelInput.setText(config.model)
                         }
                     }
                 }

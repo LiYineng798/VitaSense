@@ -26,6 +26,11 @@
     <string name="dashboard_empty_hint">No data yet. Import a demo dataset from Profile to get started.</string>
     <string name="dashboard_anomaly_title">Alerts</string>
     <string name="dashboard_quick_mood">Quick Mood Log</string>
+    <string name="dashboard_ai_advice_title">AI Advice</string>
+    <string name="dashboard_ai_advice_setup">Set up AI advice in Settings.</string>
+    <string name="dashboard_ai_advice_generate">Generate advice</string>
+    <string name="dashboard_ai_advice_refresh">Refresh advice</string>
+    <string name="dashboard_ai_advice_generating">Generating...</string>
     <string name="home_auth_signed_out">Tap to sign in</string>
     <string name="home_auth_welcome_format">Welcome, %1$s!</string>
 
@@ -111,6 +116,14 @@
     <string name="settings_import_section">Import Demo Data</string>
     <string name="settings_clear_all_data">Delete All Data</string>
     <string name="settings_clear_all_message">Delete all local data?</string>
+    <string name="settings_ai_section">AI Provider</string>
+    <string name="settings_ai_provider_deepseek">DeepSeek</string>
+    <string name="settings_ai_provider_custom">Custom OpenAI-compatible</string>
+    <string name="settings_ai_api_key">API Key</string>
+    <string name="settings_ai_base_url">Base URL</string>
+    <string name="settings_ai_model">Model</string>
+    <string name="settings_ai_save">Save AI Settings</string>
+    <string name="settings_ai_note">AI usage may consume your provider quota. Your API key is sent to the VitaSense backend only for the current request.</string>
     <string name="settings_data_section">About the Data</string>
     <string name="settings_data_note">Imported samples are for course demos and local debugging only. Nothing is uploaded to the cloud. After import, Home, Trends, Mood, and Profile refresh automatically where needed.</string>
     <string name="settings_privacy_section">Privacy</string>

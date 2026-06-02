@@ -95,6 +95,7 @@ class DashboardFragment : Fragment() {
                         selected = safeIndex,
                         visible = state.showTrendDots,
                     )
+                    renderAiAdvice(state.aiAdvice)
                 }
             }
         }
@@ -143,6 +144,38 @@ class DashboardFragment : Fragment() {
     }
 
     private fun dp(value: Int): Int = (value * requireContext().resources.displayMetrics.density).toInt()
+
+    private fun renderAiAdvice(ai: DashboardAiAdviceState) {
+        binding.aiAdviceStatusText.text = ai.errorText ?: ai.statusText
+        val summaryText =
+            buildString {
+                if (ai.summary.isNotBlank()) {
+                    append(ai.summary)
+                }
+                if (ai.recommendations.isNotEmpty()) {
+                    if (isNotBlank()) append("\n\n")
+                    ai.recommendations.forEach { recommendation ->
+                        append("- ").append(recommendation).append("\n")
+                    }
+                }
+                if (ai.disclaimer.isNotBlank()) {
+                    if (isNotBlank()) append("\n")
+                    append(ai.disclaimer)
+                }
+            }.trim()
+        binding.aiAdviceSummaryText.text = summaryText
+        binding.aiAdviceSummaryText.visibility = if (summaryText.isBlank()) View.GONE else View.VISIBLE
+        binding.aiAdviceProgress.visibility = if (ai.showProgress) View.VISIBLE else View.GONE
+        binding.aiAdviceActionButton.text = ai.actionText
+        binding.aiAdviceActionButton.isEnabled = ai.canGenerate || ai.shouldOpenSettings
+        binding.aiAdviceActionButton.setOnClickListener {
+            if (ai.shouldOpenSettings) {
+                findNavController().navigate(R.id.settingsFragment)
+            } else {
+                viewModel.generateAiAdvice()
+            }
+        }
+    }
 
     private fun navigateToBottomDestination(destination: BottomTabDestination) {
         (requireActivity() as TopLevelNavigator).navigateToBottomDestination(destination)
