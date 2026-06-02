@@ -3,6 +3,7 @@ package org.wit.vitasense.db.entity
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import org.wit.vitasense.model.deterministicHeartRateCloudId
 
 @Entity(
     tableName = "heart_rate_raw_samples",
@@ -18,4 +19,6 @@ data class HeartRateRawSampleEntity(
     val date: String,
     val heartRate: Int,
     val sourceBatchId: String,
+    val cloudId: String = deterministicHeartRateCloudId(sampleTimestamp, heartRate, sourceBatchId),
+    val updatedAt: Long = sampleTimestamp,
 )

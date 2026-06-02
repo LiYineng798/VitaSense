@@ -20,4 +20,7 @@ data class MoodRecordEntity(
     val moodGroup: String,
     val note: String?,
     val createdAt: Long = System.currentTimeMillis(),
+    val cloudId: String = java.util.UUID.randomUUID().toString(),
+    val updatedAt: Long = createdAt,
+    val deletedAt: Long? = null,
 )

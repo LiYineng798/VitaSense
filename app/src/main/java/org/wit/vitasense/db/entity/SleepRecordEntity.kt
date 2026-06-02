@@ -21,4 +21,7 @@ data class SleepRecordEntity(
     val avgHeartRate: Double? = null,
     val heartRateVariabilityHint: Double? = null,
     val sourceBatchId: String,
+    val cloudId: String = java.util.UUID.randomUUID().toString(),
+    val updatedAt: Long = endAt,
+    val deletedAt: Long? = null,
 )
