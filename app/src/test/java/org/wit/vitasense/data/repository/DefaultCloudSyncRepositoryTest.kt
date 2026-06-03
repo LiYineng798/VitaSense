@@ -262,6 +262,9 @@ private class FakeCloudMoodRecordDao : MoodRecordDao {
 
     override fun observeActiveMoodRecords(): Flow<List<MoodRecordEntity>> = flowOf(rows.filter { it.deletedAt == null })
 
+    override suspend fun getLatestForDate(date: String): MoodRecordEntity? =
+        rows.filter { it.date == date && it.deletedAt == null }.maxByOrNull { it.createdAt }
+
     override suspend fun getAllForSync(): List<MoodRecordEntity> = rows
 
     override suspend fun getByCloudId(cloudId: String): MoodRecordEntity? = rows.firstOrNull { it.cloudId == cloudId }

@@ -13,14 +13,18 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.wit.vitasense.model.AuthResult
 import org.wit.vitasense.model.AuthUser
+import org.wit.vitasense.db.entity.MoodRecordEntity
 import org.wit.vitasense.model.Family
 import org.wit.vitasense.model.FamilyMember
 import org.wit.vitasense.model.FamilyResult
 import org.wit.vitasense.model.FamilyRole
 import org.wit.vitasense.model.FamilyStatusSnapshot
 import org.wit.vitasense.model.FamilySupportType
+import org.wit.vitasense.model.MoodFilter
+import org.wit.vitasense.model.MoodType
 import org.wit.vitasense.repository.AuthRepository
 import org.wit.vitasense.repository.FamilyRepository
+import org.wit.vitasense.repository.MoodRepository
 
 class FamilyViewModelTest {
     @Test
@@ -32,6 +36,7 @@ class FamilyViewModelTest {
                 FamilyViewModel(
                     authRepository = FakeAuthRepository(null),
                     familyRepository = familyRepository,
+                    moodRepository = FakeMoodRepository(),
                     scope = scope,
                 )
             val collector = collectState(viewModel, scope)
@@ -55,6 +60,7 @@ class FamilyViewModelTest {
                 FamilyViewModel(
                     authRepository = FakeAuthRepository(AuthUser(1, "Ava Stone", "ava@example.com", "ava", "2000-01-02")),
                     familyRepository = familyRepository,
+                    moodRepository = FakeMoodRepository(),
                     scope = scope,
                 )
             val collector = collectState(viewModel, scope)
@@ -84,6 +90,7 @@ class FamilyViewModelTest {
                 FamilyViewModel(
                     authRepository = authRepository,
                     familyRepository = familyRepository,
+                    moodRepository = FakeMoodRepository(),
                     scope = scope,
                 )
             val collector = collectState(viewModel, scope)
@@ -111,6 +118,7 @@ class FamilyViewModelTest {
                 FamilyViewModel(
                     authRepository = authRepository,
                     familyRepository = familyRepository,
+                    moodRepository = FakeMoodRepository(),
                     scope = scope,
                 )
             val collector = collectState(viewModel, scope)
@@ -143,6 +151,7 @@ class FamilyViewModelTest {
                 FamilyViewModel(
                     authRepository = authRepository,
                     familyRepository = familyRepository,
+                    moodRepository = FakeMoodRepository(),
                     scope = scope,
                 )
             val collector = collectState(viewModel, scope)
@@ -177,6 +186,7 @@ class FamilyViewModelTest {
                 FamilyViewModel(
                     authRepository = FakeAuthRepository(AuthUser(2, "Ben Stone", "ben@example.com", "ben", "2001-03-04")),
                     familyRepository = familyRepository,
+                    moodRepository = FakeMoodRepository(),
                     scope = scope,
                 )
             val collector = collectState(viewModel, scope)
@@ -199,6 +209,7 @@ class FamilyViewModelTest {
                 FamilyViewModel(
                     authRepository = FakeAuthRepository(AuthUser(1, "Ava Stone", "ava@example.com", "ava", "2000-01-02")),
                     familyRepository = FakeFamilyRepository(),
+                    moodRepository = FakeMoodRepository(),
                     scope = scope,
                 )
             val collector = collectState(viewModel, scope)
@@ -225,6 +236,7 @@ class FamilyViewModelTest {
                 FamilyViewModel(
                     authRepository = FakeAuthRepository(AuthUser(1, "Ava Stone", "ava@example.com", "ava", "2000-01-02")),
                     familyRepository = familyRepository,
+                    moodRepository = FakeMoodRepository(),
                     scope = scope,
                 )
             val collector = collectState(viewModel, scope)
@@ -249,6 +261,7 @@ class FamilyViewModelTest {
                 FamilyViewModel(
                     authRepository = FakeAuthRepository(AuthUser(1, "Ava Stone", "ava@example.com", "ava", "2000-01-02")),
                     familyRepository = familyRepository,
+                    moodRepository = FakeMoodRepository(),
                     scope = scope,
                 )
             val collector = collectState(viewModel, scope)
@@ -273,6 +286,7 @@ class FamilyViewModelTest {
                 FamilyViewModel(
                     authRepository = FakeAuthRepository(AuthUser(1, "Ava Stone", "ava@example.com", "ava", "2000-01-02")),
                     familyRepository = familyRepository,
+                    moodRepository = FakeMoodRepository(),
                     scope = scope,
                 )
             val collector = collectState(viewModel, scope)
@@ -282,6 +296,47 @@ class FamilyViewModelTest {
             yield()
 
             assertEquals(1, familyRepository.createCalls)
+
+            collector.cancel()
+            scope.coroutineContext[Job]?.cancel()
+            Unit
+        }
+
+    @Test
+    fun sync_today_status_uploads_latest_mood_snapshot_for_joined_family() =
+        runBlocking {
+            val scope = CoroutineScope(Job() + Dispatchers.Unconfined)
+            val familyRepository = FakeFamilyRepository()
+            familyRepository.seedFamily(familyNamed("Ava Family", currentUserId = 1))
+            val moodRepository =
+                FakeMoodRepository(
+                    latestMood =
+                        MoodRecordEntity(
+                            date = "2026-06-03",
+                            moodType = "CALM",
+                            moodGroup = "positive",
+                            note = "steady",
+                            createdAt = 1770000000000,
+                        ),
+                )
+            val viewModel =
+                FamilyViewModel(
+                    authRepository = FakeAuthRepository(AuthUser(1, "Ava Stone", "ava@example.com", "ava", "2000-01-02")),
+                    familyRepository = familyRepository,
+                    moodRepository = moodRepository,
+                    scope = scope,
+                )
+            val collector = collectState(viewModel, scope)
+
+            yield()
+            viewModel.syncTodayStatus("2026-06-03")
+            yield()
+
+            assertEquals("2026-06-03", moodRepository.latestMoodDate)
+            assertEquals(20, familyRepository.lastStatusFamilyId)
+            assertEquals("CALM", familyRepository.lastStatusSnapshot?.moodType)
+            assertEquals("steady", familyRepository.lastStatusSnapshot?.moodNote)
+            assertEquals("Checked in today", familyRepository.lastStatusSnapshot?.statusLabel)
 
             collector.cancel()
             scope.coroutineContext[Job]?.cancel()
@@ -339,6 +394,10 @@ private class FakeFamilyRepository(
     var clearCacheCalls = 0
         private set
     var createdName = ""
+        private set
+    var lastStatusFamilyId: Long? = null
+        private set
+    var lastStatusSnapshot: FamilyStatusSnapshot? = null
         private set
     val events = mutableListOf<String>()
     val cachedFamilyValue: Family?
@@ -419,13 +478,39 @@ private class FakeFamilyRepository(
     override suspend fun upsertStatus(
         familyId: Long,
         snapshot: FamilyStatusSnapshot,
-    ): FamilyResult = error("unused")
+    ): FamilyResult {
+        lastStatusFamilyId = familyId
+        lastStatusSnapshot = snapshot
+        return FamilyResult.Success(cachedFamily.value)
+    }
 
     override suspend fun sendSupport(
         familyId: Long,
         receiverUserId: Long,
         type: FamilySupportType,
     ): FamilyResult = error("unused")
+}
+
+private class FakeMoodRepository(
+    private val latestMood: MoodRecordEntity? = null,
+) : MoodRepository {
+    var latestMoodDate: String? = null
+        private set
+
+    override fun observeMoodRecords(filter: MoodFilter): Flow<List<MoodRecordEntity>> = MutableStateFlow(emptyList())
+
+    override suspend fun addMood(
+        date: String,
+        moodType: MoodType,
+        note: String?,
+    ) = Unit
+
+    override suspend fun deleteMood(id: Long) = Unit
+
+    override suspend fun getLatestMoodForDate(date: String): MoodRecordEntity? {
+        latestMoodDate = date
+        return latestMood
+    }
 }
 
 private fun familyNamed(

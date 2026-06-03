@@ -15,4 +15,6 @@ interface MoodRepository {
     )
 
     suspend fun deleteMood(id: Long)
+
+    suspend fun getLatestMoodForDate(date: String): MoodRecordEntity?
 }

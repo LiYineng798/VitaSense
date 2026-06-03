@@ -32,6 +32,9 @@ interface MoodRecordDao {
     @Query("SELECT * FROM mood_records WHERE deletedAt IS NULL ORDER BY createdAt DESC")
     fun observeActiveMoodRecords(): Flow<List<MoodRecordEntity>>
 
+    @Query("SELECT * FROM mood_records WHERE date = :date AND deletedAt IS NULL ORDER BY createdAt DESC LIMIT 1")
+    suspend fun getLatestForDate(date: String): MoodRecordEntity?
+
     @Query("SELECT * FROM mood_records ORDER BY createdAt ASC")
     suspend fun getAllForSync(): List<MoodRecordEntity>
 

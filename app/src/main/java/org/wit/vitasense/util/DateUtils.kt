@@ -16,6 +16,8 @@ object DateUtils {
     fun formatDate(epochMillis: Long): String =
         Instant.ofEpochMilli(epochMillis).atZone(zoneId).toLocalDate().format(dateFormatter)
 
+    fun todayString(): String = formatDate(System.currentTimeMillis())
+
     fun parseDate(date: String): LocalDate = LocalDate.parse(date, dateFormatter)
 
     fun checksum(raw: String): String {

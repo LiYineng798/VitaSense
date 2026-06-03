@@ -43,6 +43,7 @@ class VitaSenseViewModelFactory(
                 FamilyViewModel(
                     authRepository = appContainer.authRepository,
                     familyRepository = appContainer.familyRepository,
+                    moodRepository = appContainer.moodRepository,
                 ) as T
 
             modelClass.isAssignableFrom(ProfileViewModel::class.java) ->

@@ -22,10 +22,12 @@ import org.wit.vitasense.model.FamilySupportType
 import org.wit.vitasense.model.familyErrorMessage
 import org.wit.vitasense.repository.AuthRepository
 import org.wit.vitasense.repository.FamilyRepository
+import org.wit.vitasense.repository.MoodRepository
 
 class FamilyViewModel(
     private val authRepository: AuthRepository,
     private val familyRepository: FamilyRepository,
+    private val moodRepository: MoodRepository,
     scope: CoroutineScope? = null,
 ) : ViewModel() {
     private val modelScope = scope ?: viewModelScope
@@ -157,6 +159,23 @@ class FamilyViewModel(
     ) {
         runFamilyAction {
             familyRepository.upsertStatus(familyId, snapshot)
+        }
+    }
+
+    fun syncTodayStatus(date: String) {
+        val familyId = state.value.familyId ?: return
+        runFamilyAction {
+            val mood = moodRepository.getLatestMoodForDate(date)
+            familyRepository.upsertStatus(
+                familyId = familyId,
+                snapshot =
+                    FamilyStatusSnapshot(
+                        moodType = mood?.moodType,
+                        moodNote = mood?.note,
+                        statusLabel = if (mood == null) "No check-in yet" else "Checked in today",
+                        updatedAt = System.currentTimeMillis(),
+                    ),
+            )
         }
     }
 

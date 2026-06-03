@@ -17,11 +17,13 @@ import org.wit.vitasense.VitaSenseApplication
 import org.wit.vitasense.databinding.FragmentFamilyBinding
 import org.wit.vitasense.model.FamilySupportType
 import org.wit.vitasense.ui.common.VitaSenseViewModelFactory
+import org.wit.vitasense.util.DateUtils
 
 class FamilyFragment : Fragment() {
     private var _binding: FragmentFamilyBinding? = null
     private val binding get() = _binding!!
     private lateinit var adapter: FamilyMemberAdapter
+    private var lastSyncedStatusKey: String? = null
 
     private val viewModel: FamilyViewModel by viewModels {
         VitaSenseViewModelFactory((requireActivity().application as VitaSenseApplication).appContainer)
@@ -87,6 +89,17 @@ class FamilyFragment : Fragment() {
         binding.regenerateCodeButton.isVisible = state.canManageFamily
         binding.leaveFamilyButton.isVisible = state.canLeaveFamily
         adapter.submitItems(state.members)
+        syncStatusIfNeeded(state)
+    }
+
+    private fun syncStatusIfNeeded(state: FamilyScreenState) {
+        val familyId = state.familyId ?: return
+        if (state.mode != FamilyScreenMode.JOINED_FAMILY) return
+        val today = DateUtils.todayString()
+        val syncKey = "$familyId:$today"
+        if (lastSyncedStatusKey == syncKey) return
+        lastSyncedStatusKey = syncKey
+        viewModel.syncTodayStatus(today)
     }
 
     private fun sendSupport(

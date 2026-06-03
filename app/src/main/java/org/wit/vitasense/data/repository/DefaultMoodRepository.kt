@@ -41,6 +41,9 @@ class DefaultMoodRepository(
         pushMoodChanged()
     }
 
+    override suspend fun getLatestMoodForDate(date: String): MoodRecordEntity? =
+        moodRecordDao.getLatestForDate(date)
+
     private suspend fun pushMoodChanged() {
         runCatching {
             cloudSyncRepositoryProvider?.invoke()?.pushLocalSnapshot(SyncReason.MOOD_CHANGED)

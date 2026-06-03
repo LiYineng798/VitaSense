@@ -29,6 +29,21 @@ class DefaultMoodRepositoryTest {
         assertEquals(1L, dao.markDeletedId)
         assertEquals(listOf(SyncReason.MOOD_CHANGED, SyncReason.MOOD_CHANGED), cloudSyncRepository.pushReasons)
     }
+
+    @Test
+    fun getLatestMoodForDateReturnsNewestActiveMoodForDate() = runBlocking {
+        val dao = FakeMoodRecordDao()
+        val repository = DefaultMoodRepository(dao)
+
+        dao.insert(MoodRecordEntity(date = "2026-06-03", moodType = "LOW", moodGroup = "negative", note = null, createdAt = 1L))
+        dao.insert(MoodRecordEntity(date = "2026-06-03", moodType = "CALM", moodGroup = "positive", note = "steady", createdAt = 2L))
+        dao.insert(MoodRecordEntity(date = "2026-06-04", moodType = "HAPPY", moodGroup = "positive", note = null, createdAt = 3L))
+
+        val mood = repository.getLatestMoodForDate("2026-06-03")
+
+        assertEquals("CALM", mood?.moodType)
+        assertEquals("steady", mood?.note)
+    }
 }
 
 private class FakeMoodRecordDao : MoodRecordDao {
@@ -48,6 +63,9 @@ private class FakeMoodRecordDao : MoodRecordDao {
     ): Flow<List<MoodRecordEntity>> = flowOf(rows.filter { it.deletedAt == null })
 
     override fun observeActiveMoodRecords(): Flow<List<MoodRecordEntity>> = flowOf(rows.filter { it.deletedAt == null })
+
+    override suspend fun getLatestForDate(date: String): MoodRecordEntity? =
+        rows.filter { it.date == date && it.deletedAt == null }.maxByOrNull { it.createdAt }
 
     override suspend fun getAllForSync(): List<MoodRecordEntity> = rows
 
