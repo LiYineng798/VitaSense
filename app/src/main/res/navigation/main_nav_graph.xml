@@ -43,4 +43,9 @@
         android:id="@+id/settingsFragment"
         android:name="org.wit.vitasense.ui.settings.SettingsFragment"
         android:label="@string/nav_settings" />
+
+    <fragment
+        android:id="@+id/familyFragment"
+        android:name="org.wit.vitasense.ui.family.FamilyFragment"
+        android:label="@string/family_title" />
 </navigation>

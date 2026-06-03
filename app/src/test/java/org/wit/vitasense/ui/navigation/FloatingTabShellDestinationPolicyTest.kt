@@ -17,5 +17,6 @@ class FloatingTabShellDestinationPolicyTest {
         assertFalse(FloatingTabShellDestinationPolicy.shouldShowFloatingTabs(R.id.authFragment))
         assertFalse(FloatingTabShellDestinationPolicy.shouldShowFloatingTabs(R.id.appearanceFragment))
         assertFalse(FloatingTabShellDestinationPolicy.shouldShowFloatingTabs(R.id.settingsFragment))
+        assertFalse(FloatingTabShellDestinationPolicy.shouldShowFloatingTabs(R.id.familyFragment))
     }
 }

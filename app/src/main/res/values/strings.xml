@@ -152,6 +152,26 @@
 
     <string name="appearance_title">Appearance</string>
 
+    <string name="family_title">Family</string>
+    <string name="family_signed_out_message">Sign in to create or join a family.</string>
+    <string name="family_create_title">Create a Family</string>
+    <string name="family_join_title">Join a Family</string>
+    <string name="family_name_hint">Family name</string>
+    <string name="family_invite_code_hint">Invite code</string>
+    <string name="family_create_action">Create Family</string>
+    <string name="family_join_action">Join</string>
+    <string name="family_regenerate_code">Regenerate Code</string>
+    <string name="family_leave">Leave Family</string>
+    <string name="family_remove">Remove</string>
+    <string name="family_no_support">No support yet today</string>
+    <string name="family_support_thinking">Thinking of you</string>
+    <string name="family_support_need_anything">Need anything?</string>
+    <string name="family_support_take_pause">Take a pause</string>
+    <string name="family_support_proud">Proud of you</string>
+    <string name="profile_family_button_label">Family</string>
+    <string name="dashboard_family_title">Family</string>
+    <string name="dashboard_family_summary_format">%1$d updates today / %2$d support received</string>
+
     <string name="auth_subtitle">Use your VitaSense server account to sign in or create a new account.</string>
     <string name="auth_login_tab">Login</string>
     <string name="auth_register_tab">Register</string>
