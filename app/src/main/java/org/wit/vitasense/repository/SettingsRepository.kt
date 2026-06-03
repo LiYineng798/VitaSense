@@ -25,6 +25,12 @@ interface SettingsRepository {
 
     fun observeLatestAiAdviceGeneratedAt(): Flow<Long?>
 
+    fun observeLastSyncAt(): Flow<Long?>
+
+    fun observeSyncStatus(): Flow<String>
+
+    fun observeSyncError(): Flow<String>
+
     suspend fun getThemeMode(): ThemeMode
 
     suspend fun getThemeFamily(): ThemeFamily
@@ -43,6 +49,12 @@ interface SettingsRepository {
 
     suspend fun getLatestAiAdviceGeneratedAt(): Long?
 
+    suspend fun getLastSyncAt(): Long?
+
+    suspend fun getSyncStatus(): String
+
+    suspend fun getSyncError(): String
+
     suspend fun setThemeMode(mode: ThemeMode)
 
     suspend fun setThemeFamily(family: ThemeFamily)
@@ -60,5 +72,11 @@ interface SettingsRepository {
     suspend fun setLatestAiAdvice(
         advice: AiAdvice,
         generatedAt: Long,
+    )
+
+    suspend fun setSyncStatus(
+        status: String,
+        error: String? = null,
+        syncedAt: Long? = null,
     )
 }

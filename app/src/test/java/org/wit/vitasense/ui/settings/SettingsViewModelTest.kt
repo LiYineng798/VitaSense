@@ -82,6 +82,9 @@ private class FakeSettingsRepository : SettingsRepository {
     val aiConfig = MutableStateFlow(AiProviderConfig())
     val latestAiAdvice = MutableStateFlow<AiAdvice?>(null)
     val latestAiAdviceGeneratedAt = MutableStateFlow<Long?>(null)
+    val lastSyncAt = MutableStateFlow<Long?>(null)
+    val syncStatus = MutableStateFlow("idle")
+    val syncError = MutableStateFlow("")
 
     override fun observeThemeMode(): Flow<ThemeMode> = themeMode
 
@@ -101,6 +104,12 @@ private class FakeSettingsRepository : SettingsRepository {
 
     override fun observeLatestAiAdviceGeneratedAt(): Flow<Long?> = latestAiAdviceGeneratedAt
 
+    override fun observeLastSyncAt(): Flow<Long?> = lastSyncAt
+
+    override fun observeSyncStatus(): Flow<String> = syncStatus
+
+    override fun observeSyncError(): Flow<String> = syncError
+
     override suspend fun getThemeMode(): ThemeMode = themeMode.value
 
     override suspend fun getThemeFamily(): ThemeFamily = themeFamily.value
@@ -118,6 +127,12 @@ private class FakeSettingsRepository : SettingsRepository {
     override suspend fun getLatestAiAdvice(): AiAdvice? = latestAiAdvice.value
 
     override suspend fun getLatestAiAdviceGeneratedAt(): Long? = latestAiAdviceGeneratedAt.value
+
+    override suspend fun getLastSyncAt(): Long? = lastSyncAt.value
+
+    override suspend fun getSyncStatus(): String = syncStatus.value
+
+    override suspend fun getSyncError(): String = syncError.value
 
     override suspend fun setThemeMode(mode: ThemeMode) {
         themeMode.value = mode
@@ -153,6 +168,16 @@ private class FakeSettingsRepository : SettingsRepository {
     ) {
         latestAiAdvice.value = advice
         latestAiAdviceGeneratedAt.value = generatedAt
+    }
+
+    override suspend fun setSyncStatus(
+        status: String,
+        error: String?,
+        syncedAt: Long?,
+    ) {
+        syncStatus.value = status
+        syncError.value = error.orEmpty()
+        if (syncedAt != null) lastSyncAt.value = syncedAt
     }
 }
 

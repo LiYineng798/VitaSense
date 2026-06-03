@@ -136,6 +136,29 @@ class DefaultSettingsRepositoryTest {
         assertEquals(advice, repository.observeLatestAiAdvice().first())
         assertEquals(1_779_999_000_000L, repository.observeLatestAiAdviceGeneratedAt().first())
     }
+
+    @Test
+    fun persists_and_restores_cloud_sync_status() = runBlocking {
+        val dao = FakeAppSettingDao()
+        val repository = DefaultSettingsRepository(dao)
+
+        assertEquals("idle", repository.getSyncStatus())
+        assertEquals("", repository.getSyncError())
+        assertEquals(null, repository.getLastSyncAt())
+
+        repository.setSyncStatus(
+            status = "synced",
+            error = null,
+            syncedAt = 1_779_999_000_001L,
+        )
+
+        assertEquals("synced", repository.getSyncStatus())
+        assertEquals("", repository.getSyncError())
+        assertEquals(1_779_999_000_001L, repository.getLastSyncAt())
+        assertEquals("synced", repository.observeSyncStatus().first())
+        assertEquals("", repository.observeSyncError().first())
+        assertEquals(1_779_999_000_001L, repository.observeLastSyncAt().first())
+    }
 }
 
 private class FakeAppSettingDao(

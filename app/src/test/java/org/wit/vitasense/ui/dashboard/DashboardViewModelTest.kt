@@ -189,6 +189,9 @@ class DashboardViewModelTest {
         val aiConfig = MutableStateFlow(AiProviderConfig())
         private val latestAiAdvice = MutableStateFlow<AiAdvice?>(null)
         private val latestAiAdviceGeneratedAt = MutableStateFlow<Long?>(null)
+        private val lastSyncAt = MutableStateFlow<Long?>(null)
+        private val syncStatus = MutableStateFlow("idle")
+        private val syncError = MutableStateFlow("")
 
         override fun observeThemeMode(): Flow<ThemeMode> = flowOf(ThemeMode.LIGHT)
 
@@ -208,6 +211,12 @@ class DashboardViewModelTest {
 
         override fun observeLatestAiAdviceGeneratedAt(): Flow<Long?> = latestAiAdviceGeneratedAt
 
+        override fun observeLastSyncAt(): Flow<Long?> = lastSyncAt
+
+        override fun observeSyncStatus(): Flow<String> = syncStatus
+
+        override fun observeSyncError(): Flow<String> = syncError
+
         override suspend fun getThemeMode(): ThemeMode = ThemeMode.LIGHT
 
         override suspend fun getThemeFamily(): ThemeFamily = ThemeFamily.DEFAULT
@@ -225,6 +234,12 @@ class DashboardViewModelTest {
         override suspend fun getLatestAiAdvice(): AiAdvice? = latestAiAdvice.value
 
         override suspend fun getLatestAiAdviceGeneratedAt(): Long? = latestAiAdviceGeneratedAt.value
+
+        override suspend fun getLastSyncAt(): Long? = lastSyncAt.value
+
+        override suspend fun getSyncStatus(): String = syncStatus.value
+
+        override suspend fun getSyncError(): String = syncError.value
 
         override suspend fun setThemeMode(mode: ThemeMode) = Unit
 
@@ -248,6 +263,16 @@ class DashboardViewModelTest {
         ) {
             latestAiAdvice.value = advice
             latestAiAdviceGeneratedAt.value = generatedAt
+        }
+
+        override suspend fun setSyncStatus(
+            status: String,
+            error: String?,
+            syncedAt: Long?,
+        ) {
+            syncStatus.value = status
+            syncError.value = error.orEmpty()
+            if (syncedAt != null) lastSyncAt.value = syncedAt
         }
     }
 

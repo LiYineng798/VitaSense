@@ -77,6 +77,18 @@ class DefaultSettingsRepository(
         appSettingDao.observe(AI_LATEST_ADVICE_GENERATED_AT_KEY)
             .map { entity -> entity?.value?.toLongOrNull() }
 
+    override fun observeLastSyncAt(): Flow<Long?> =
+        appSettingDao.observe(KEY_LAST_SYNC_AT)
+            .map { entity -> entity?.value?.toLongOrNull() }
+
+    override fun observeSyncStatus(): Flow<String> =
+        appSettingDao.observe(KEY_SYNC_STATUS)
+            .map { entity -> entity?.value?.takeIf { it.isNotBlank() } ?: "idle" }
+
+    override fun observeSyncError(): Flow<String> =
+        appSettingDao.observe(KEY_SYNC_ERROR)
+            .map { entity -> entity?.value.orEmpty() }
+
     override suspend fun getThemeMode(): ThemeMode =
         when (appSettingDao.get(THEME_KEY)?.value?.lowercase()) {
             "dark" -> ThemeMode.DARK
@@ -118,6 +130,15 @@ class DefaultSettingsRepository(
 
     override suspend fun getLatestAiAdviceGeneratedAt(): Long? =
         appSettingDao.get(AI_LATEST_ADVICE_GENERATED_AT_KEY)?.value?.toLongOrNull()
+
+    override suspend fun getLastSyncAt(): Long? =
+        appSettingDao.get(KEY_LAST_SYNC_AT)?.value?.toLongOrNull()
+
+    override suspend fun getSyncStatus(): String =
+        appSettingDao.get(KEY_SYNC_STATUS)?.value?.takeIf { it.isNotBlank() } ?: "idle"
+
+    override suspend fun getSyncError(): String =
+        appSettingDao.get(KEY_SYNC_ERROR)?.value.orEmpty()
 
     override suspend fun setThemeMode(mode: ThemeMode) {
         appSettingDao.upsert(
@@ -188,6 +209,18 @@ class DefaultSettingsRepository(
         appSettingDao.upsert(AppSettingEntity(AI_LATEST_ADVICE_GENERATED_AT_KEY, generatedAt.toString()))
     }
 
+    override suspend fun setSyncStatus(
+        status: String,
+        error: String?,
+        syncedAt: Long?,
+    ) {
+        appSettingDao.upsert(AppSettingEntity(KEY_SYNC_STATUS, status))
+        appSettingDao.upsert(AppSettingEntity(KEY_SYNC_ERROR, error.orEmpty()))
+        if (syncedAt != null) {
+            appSettingDao.upsert(AppSettingEntity(KEY_LAST_SYNC_AT, syncedAt.toString()))
+        }
+    }
+
     private companion object {
         const val THEME_KEY = "theme_mode"
         const val THEME_FAMILY_KEY = "theme_family"
@@ -201,5 +234,8 @@ class DefaultSettingsRepository(
         const val AI_MODEL_KEY = "ai_model"
         const val AI_LATEST_ADVICE_JSON_KEY = "ai_latest_advice_json"
         const val AI_LATEST_ADVICE_GENERATED_AT_KEY = "ai_latest_advice_generated_at"
+        const val KEY_LAST_SYNC_AT = "last_sync_at"
+        const val KEY_SYNC_STATUS = "sync_status"
+        const val KEY_SYNC_ERROR = "sync_error"
     }
 }
