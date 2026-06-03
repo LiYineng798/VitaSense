@@ -15,11 +15,13 @@ import org.wit.vitasense.model.AiHealthSummary
 import org.wit.vitasense.model.AiAdvice
 import org.wit.vitasense.model.AiProviderConfig
 import org.wit.vitasense.model.AuthUser
+import org.wit.vitasense.model.Family
 import org.wit.vitasense.model.aiErrorMessage
 import org.wit.vitasense.db.entity.DailyPhysiologySummaryEntity
 import org.wit.vitasense.db.entity.RiskAssessmentRecordEntity
 import org.wit.vitasense.repository.AiAdviceRepository
 import org.wit.vitasense.repository.AuthRepository
+import org.wit.vitasense.repository.FamilyRepository
 import org.wit.vitasense.repository.HealthRepository
 import org.wit.vitasense.repository.SettingsRepository
 
@@ -28,6 +30,7 @@ class DashboardViewModel(
     authRepository: AuthRepository,
     private val settingsRepository: SettingsRepository,
     private val aiAdviceRepository: AiAdviceRepository,
+    familyRepository: FamilyRepository,
     scope: CoroutineScope? = null,
 ) : ViewModel() {
     private val modelScope = scope ?: viewModelScope
@@ -42,6 +45,7 @@ class DashboardViewModel(
             settingsRepository.observeAiProviderConfig(),
             settingsRepository.observeLatestAiAdvice(),
             settingsRepository.observeLatestAiAdviceGeneratedAt(),
+            familyRepository.observeCachedFamily(),
             aiLoading,
             aiErrorText,
         ) { values ->
@@ -52,8 +56,9 @@ class DashboardViewModel(
             val aiConfig = values[3] as AiProviderConfig
             val latestAiAdvice = values[4] as AiAdvice?
             val latestAiAdviceGeneratedAt = values[5] as Long?
-            val isAiLoading = values[6] as Boolean
-            val aiError = values[7] as String?
+            val family = values[6] as Family?
+            val isAiLoading = values[7] as Boolean
+            val aiError = values[8] as String?
             DashboardHomeUiMapper.build(
                 summaries = summaries,
                 latestRisk = latestRisk,
@@ -63,7 +68,7 @@ class DashboardViewModel(
                 latestAiAdviceGeneratedAt = latestAiAdviceGeneratedAt,
                 isAiLoading = isAiLoading,
                 aiErrorText = aiError,
-            )
+            ).copy(family = buildFamilyState(family))
         }.stateIn(
             scope = modelScope,
             started = SharingStarted.WhileSubscribed(5_000),
@@ -118,5 +123,15 @@ class DashboardViewModel(
             }
             aiLoading.value = false
         }
+    }
+
+    private fun buildFamilyState(family: Family?): DashboardFamilyState {
+        if (family == null) return DashboardFamilyState()
+        val updates = family.members.count { it.statusUpdatedAt != null }
+        val support = family.members.sumOf { it.supportCountToday }
+        return DashboardFamilyState(
+            visible = true,
+            summaryText = "$updates updates today / $support support received",
+        )
     }
 }

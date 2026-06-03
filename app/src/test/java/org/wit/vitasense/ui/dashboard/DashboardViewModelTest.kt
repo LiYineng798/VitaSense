@@ -23,12 +23,19 @@ import org.wit.vitasense.model.AiProviderConfig
 import org.wit.vitasense.model.AuthResult
 import org.wit.vitasense.model.AuthUser
 import org.wit.vitasense.model.DemoBundleInfo
+import org.wit.vitasense.model.Family
+import org.wit.vitasense.model.FamilyMember
+import org.wit.vitasense.model.FamilyResult
+import org.wit.vitasense.model.FamilyRole
+import org.wit.vitasense.model.FamilyStatusSnapshot
+import org.wit.vitasense.model.FamilySupportType
 import org.wit.vitasense.model.ImportOperationResult
 import org.wit.vitasense.model.ImportStatus
 import org.wit.vitasense.model.ThemeFamily
 import org.wit.vitasense.model.ThemeMode
 import org.wit.vitasense.repository.AiAdviceRepository
 import org.wit.vitasense.repository.AuthRepository
+import org.wit.vitasense.repository.FamilyRepository
 import org.wit.vitasense.repository.HealthRepository
 import org.wit.vitasense.repository.SettingsRepository
 
@@ -48,6 +55,7 @@ class DashboardViewModelTest {
                     authRepository = authRepository,
                     settingsRepository = FakeSettingsRepository(),
                     aiAdviceRepository = FakeAiAdviceRepository(),
+                    familyRepository = FakeFamilyRepository(),
                     scope = scope,
                 )
             val collector = collectState(viewModel, scope)
@@ -85,6 +93,7 @@ class DashboardViewModelTest {
                     authRepository = FakeAuthRepository(null),
                     settingsRepository = FakeSettingsRepository(),
                     aiAdviceRepository = FakeAiAdviceRepository(),
+                    familyRepository = FakeFamilyRepository(),
                     scope = scope,
                 )
             val collector = collectState(viewModel, scope)
@@ -115,6 +124,7 @@ class DashboardViewModelTest {
                     authRepository = FakeAuthRepository(null),
                     settingsRepository = settings,
                     aiAdviceRepository = adviceRepository,
+                    familyRepository = FakeFamilyRepository(),
                     scope = scope,
                 )
 
@@ -127,6 +137,49 @@ class DashboardViewModelTest {
             scope.coroutineContext[Job]?.cancel()
         }
     }
+
+    @Test
+    fun exposes_family_summary_when_cached_family_exists() =
+        runBlocking {
+            val familyRepository = FakeFamilyRepository()
+            val scope = CoroutineScope(Job() + Dispatchers.Unconfined)
+            val viewModel =
+                DashboardViewModel(
+                    healthRepository = FakeHealthRepository(),
+                    authRepository = FakeAuthRepository(
+                        AuthUser(1, "Ava Stone", "ava@example.com", "ava", "2000-01-02"),
+                    ),
+                    settingsRepository = FakeSettingsRepository(),
+                    aiAdviceRepository = FakeAiAdviceRepository(),
+                    familyRepository = familyRepository,
+                    scope = scope,
+                )
+            val collector = collectState(viewModel, scope)
+
+            familyRepository.family.value =
+                Family(
+                    id = 12,
+                    name = "Stone Family",
+                    inviteCode = "ABC123",
+                    currentUserRole = FamilyRole.OWNER,
+                    members =
+                        listOf(
+                            familyMember(1, statusUpdatedAt = 1770000000000, supportCountToday = 2),
+                            familyMember(2, statusUpdatedAt = null, supportCountToday = 1),
+                            familyMember(3, statusUpdatedAt = 1770000001000, supportCountToday = 0),
+                        ),
+                )
+
+            yield()
+
+            val state = viewModel.state.value
+            assertTrue(state.family.visible)
+            assertEquals("2 updates today / 3 support received", state.family.summaryText)
+
+            collector.cancel()
+            scope.coroutineContext[Job]?.cancel()
+            Unit
+        }
 
     private fun collectState(
         viewModel: DashboardViewModel,
@@ -311,6 +364,47 @@ class DashboardViewModelTest {
         }
     }
 
+    private class FakeFamilyRepository : FamilyRepository {
+        val family = MutableStateFlow<Family?>(null)
+
+        override fun observeCachedFamily(): Flow<Family?> = family
+
+        override fun clearCache() {
+            family.value = null
+        }
+
+        override suspend fun refreshFamily(): FamilyResult = FamilyResult.Success(family.value)
+
+        override suspend fun createFamily(name: String): FamilyResult = FamilyResult.Success(family.value)
+
+        override suspend fun joinFamily(inviteCode: String): FamilyResult = FamilyResult.Success(family.value)
+
+        override suspend fun renameFamily(
+            familyId: Long,
+            name: String,
+        ): FamilyResult = FamilyResult.Success(family.value)
+
+        override suspend fun regenerateInviteCode(familyId: Long): FamilyResult = FamilyResult.Success(family.value)
+
+        override suspend fun removeMember(
+            familyId: Long,
+            userId: Long,
+        ): FamilyResult = FamilyResult.Success(family.value)
+
+        override suspend fun leaveFamily(familyId: Long): FamilyResult = FamilyResult.Success(null)
+
+        override suspend fun upsertStatus(
+            familyId: Long,
+            snapshot: FamilyStatusSnapshot,
+        ): FamilyResult = FamilyResult.Success(family.value)
+
+        override suspend fun sendSupport(
+            familyId: Long,
+            receiverUserId: Long,
+            type: FamilySupportType,
+        ): FamilyResult = FamilyResult.Success(family.value)
+    }
+
     private fun summary(
         date: String,
         sleepMinutes: Int?,
@@ -340,5 +434,23 @@ class DashboardViewModelTest {
         avgHrScore = 17,
         explanation = "Stable recovery",
         suggestionText = "Keep the current pace",
+    )
+
+    private fun familyMember(
+        userId: Long,
+        statusUpdatedAt: Long?,
+        supportCountToday: Int,
+    ) = FamilyMember(
+        userId = userId,
+        fullName = "Member $userId",
+        username = "member$userId",
+        role = FamilyRole.MEMBER,
+        moodType = null,
+        moodNote = null,
+        statusLabel = "Checked in today",
+        statusUpdatedAt = statusUpdatedAt,
+        supportCountToday = supportCountToday,
+        latestSupportType = null,
+        latestSupportSentAt = null,
     )
 }

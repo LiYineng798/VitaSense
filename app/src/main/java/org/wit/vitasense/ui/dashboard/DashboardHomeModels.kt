@@ -23,6 +23,11 @@ data class DashboardAiAdviceState(
     val errorText: String? = null,
 )
 
+data class DashboardFamilyState(
+    val visible: Boolean = false,
+    val summaryText: String = "",
+)
+
 data class DashboardScreenState(
     val totalScore: String = "--",
     val trendPages: List<DashboardTrendPageModel> = listOf(
@@ -44,4 +49,5 @@ data class DashboardScreenState(
     val anomalyReminder: String = "After you import data, this area will highlight single-day and continuous anomalies.",
     val showEmptyState: Boolean = true,
     val aiAdvice: DashboardAiAdviceState = DashboardAiAdviceState(),
+    val family: DashboardFamilyState = DashboardFamilyState(),
 )

@@ -47,6 +47,9 @@ class ProfileFragment : Fragment() {
         binding.appearanceEntryCard.setOnClickListener {
             findNavController().navigate(R.id.appearanceFragment)
         }
+        binding.familyEntryCard.setOnClickListener {
+            findNavController().navigate(R.id.familyFragment)
+        }
         binding.settingsEntryCard.setOnClickListener {
             findNavController().navigate(R.id.settingsFragment)
         }

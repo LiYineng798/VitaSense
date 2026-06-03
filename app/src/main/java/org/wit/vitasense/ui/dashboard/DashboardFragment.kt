@@ -65,6 +65,9 @@ class DashboardFragment : Fragment() {
         binding.quickMoodButton.setOnClickListener {
             navigateToBottomDestination(BottomTabDestination.MOOD)
         }
+        binding.familySummaryCard.setOnClickListener {
+            findNavController().navigate(R.id.familyFragment)
+        }
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -95,6 +98,8 @@ class DashboardFragment : Fragment() {
                         selected = safeIndex,
                         visible = state.showTrendDots,
                     )
+                    binding.familySummaryCard.visibility = if (state.family.visible) View.VISIBLE else View.GONE
+                    binding.familySummaryText.text = state.family.summaryText
                     renderAiAdvice(state.aiAdvice)
                 }
             }
