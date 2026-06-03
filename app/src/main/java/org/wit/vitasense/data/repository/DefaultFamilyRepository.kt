@@ -125,6 +125,11 @@ class DefaultFamilyRepository(
                     return@withContext FamilyResult.Error("network", familyErrorMessage("network"))
                 } catch (_: SecurityException) {
                     return@withContext FamilyResult.Error("network", familyErrorMessage("network"))
+                } catch (_: Exception) {
+                    return@withContext FamilyResult.Error(
+                        "unexpected_response",
+                        familyErrorMessage("unexpected_response"),
+                    )
                 }
 
             val result =

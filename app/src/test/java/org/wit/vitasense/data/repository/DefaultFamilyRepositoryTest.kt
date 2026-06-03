@@ -90,6 +90,24 @@ class DefaultFamilyRepositoryTest {
             assertFalse(body.contains("sleep_minutes"))
         }
 
+    @Test
+    fun refreshFamily_maps_unexpected_request_failure_to_unexpected_response() =
+        runBlocking {
+            val repository =
+                DefaultFamilyRepository(
+                    baseUrlProvider = { "https://server.np5.top" },
+                    tokenProvider = { "token-a" },
+                    request = { _, _, _, _ ->
+                        throw RuntimeException("bad json path")
+                    },
+                )
+
+            val result = repository.refreshFamily()
+
+            assertTrue(result is FamilyResult.Error)
+            assertEquals("unexpected_response", (result as FamilyResult.Error).code)
+        }
+
     private fun familyEnvelope(): String =
         """
         {
