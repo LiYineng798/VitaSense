@@ -602,7 +602,6 @@ def serialize_family(connection: sqlite3.Connection, family_id: int, current_use
             family_members.role,
             family_members.joined_at,
             users.full_name,
-            users.email,
             users.username,
             family_status_snapshots.mood_type,
             family_status_snapshots.mood_note,
@@ -623,7 +622,16 @@ def serialize_family(connection: sqlite3.Connection, family_id: int, current_use
                     AND family_supports.support_date = ?
                 ORDER BY family_supports.sent_at DESC, family_supports.id DESC
                 LIMIT 1
-            ) AS latest_support_type
+            ) AS latest_support_type,
+            (
+                SELECT family_supports.sent_at
+                FROM family_supports
+                WHERE family_supports.family_id = family_members.family_id
+                    AND family_supports.receiver_user_id = family_members.user_id
+                    AND family_supports.support_date = ?
+                ORDER BY family_supports.sent_at DESC, family_supports.id DESC
+                LIMIT 1
+            ) AS latest_support_sent_at
         FROM family_members
         INNER JOIN users ON users.id = family_members.user_id
         LEFT JOIN family_status_snapshots
@@ -632,14 +640,13 @@ def serialize_family(connection: sqlite3.Connection, family_id: int, current_use
         WHERE family_members.family_id = ?
         ORDER BY family_members.role = 'owner' DESC, family_members.joined_at ASC, users.full_name ASC
         """.strip(),
-        (support_date, support_date, family_id),
+        (support_date, support_date, support_date, family_id),
     ).fetchall()
 
     members = [
         {
             "user_id": row["user_id"],
             "full_name": row["full_name"],
-            "email": row["email"],
             "username": row["username"],
             "role": row["role"],
             "joined_at": row["joined_at"],
@@ -649,6 +656,7 @@ def serialize_family(connection: sqlite3.Connection, family_id: int, current_use
             "status_updated_at": row["status_updated_at"],
             "support_count_today": row["support_count_today"],
             "latest_support_type": row["latest_support_type"],
+            "latest_support_sent_at": row["latest_support_sent_at"],
         }
         for row in rows
     ]
@@ -1047,6 +1055,32 @@ def regenerate_family_invite_code(family_id: int, authorization: str | None = He
     return body
 
 
+@app.delete("/api/v1/families/{family_id}/members/me")
+def leave_family(family_id: int, authorization: str | None = Header(default=None)):
+    user_id = require_family_user(authorization)
+    if isinstance(user_id, JSONResponse):
+        return user_id
+
+    with get_connection() as connection:
+        membership = require_family_membership(connection, family_id, user_id)
+        if isinstance(membership, JSONResponse):
+            return membership
+        if membership["role"] == "owner":
+            return family_error(400, "owner_cannot_leave", "The family owner cannot leave in this version.")
+
+        connection.execute(
+            "DELETE FROM family_members WHERE family_id = ? AND user_id = ?",
+            (family_id, user_id),
+        )
+        connection.commit()
+
+    return {
+        "success": True,
+        "message": "Family left.",
+        "family": None,
+    }
+
+
 @app.delete("/api/v1/families/{family_id}/members/{member_user_id}")
 def remove_family_member(family_id: int, member_user_id: int, authorization: str | None = Header(default=None)):
     user_id = require_family_user(authorization)
@@ -1071,31 +1105,6 @@ def remove_family_member(family_id: int, member_user_id: int, authorization: str
         connection.commit()
 
     return body
-
-
-@app.delete("/api/v1/families/{family_id}/members/me")
-def leave_family(family_id: int, authorization: str | None = Header(default=None)):
-    user_id = require_family_user(authorization)
-    if isinstance(user_id, JSONResponse):
-        return user_id
-
-    with get_connection() as connection:
-        membership = require_family_membership(connection, family_id, user_id)
-        if isinstance(membership, JSONResponse):
-            return membership
-        if membership["role"] == "owner":
-            return family_error(400, "owner_cannot_leave", "The family owner cannot leave in this version.")
-
-        connection.execute(
-            "DELETE FROM family_members WHERE family_id = ? AND user_id = ?",
-            (family_id, user_id),
-        )
-        connection.commit()
-
-    return {
-        "success": True,
-        "message": "Family left.",
-    }
 
 
 @app.post("/api/v1/families/{family_id}/status")

@@ -101,6 +101,7 @@ def test_family_create_join_permissions_and_privacy():
         assert "rmssd" not in raw
         assert "heart_rate" not in raw
         assert "sleep_minutes" not in raw
+        assert all("email" not in item for item in body["family"]["members"])
         assert any(item["user_id"] == member["id"] and item["mood_type"] == "CALM" for item in body["family"]["members"])
 
 
@@ -155,8 +156,41 @@ def test_family_support_validation_and_dedupe():
         member_card = next(item for item in family_body["members"] if item["user_id"] == member["id"])
         assert member_card["support_count_today"] == 1
         assert member_card["latest_support_type"] == "proud_of_you"
+        assert isinstance(member_card["latest_support_sent_at"], int)
+
+
+def test_family_leave_member_and_owner_rules():
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+        module = importlib.import_module("main")
+        module.DB_PATH = Path(tmp) / "auth.db"
+        module.initialize_database()
+        client = TestClient(module.app)
+
+        token_owner, _owner = register(client, "leave-owner")
+        token_member, _member = register(client, "leave-member")
+
+        created = client.post("/api/v1/families", json={"name": "Leave Team"}, headers=auth_headers(token_owner))
+        assert created.status_code == 200, created.text
+        family = created.json()["family"]
+        joined = client.post("/api/v1/families/join", json={"invite_code": family["invite_code"]}, headers=auth_headers(token_member))
+        assert joined.status_code == 200, joined.text
+
+        member_leave = client.delete(
+            f"/api/v1/families/{family['id']}/members/me",
+            headers=auth_headers(token_member),
+        )
+        assert member_leave.status_code == 200, member_leave.text
+        assert member_leave.json()["family"] is None
+
+        owner_leave = client.delete(
+            f"/api/v1/families/{family['id']}/members/me",
+            headers=auth_headers(token_owner),
+        )
+        assert owner_leave.status_code == 400, owner_leave.text
+        assert owner_leave.json()["code"] == "owner_cannot_leave"
 
 
 if __name__ == "__main__":
     test_family_create_join_permissions_and_privacy()
     test_family_support_validation_and_dedupe()
+    test_family_leave_member_and_owner_rules()
