@@ -65,13 +65,13 @@ class DefaultCloudSyncRepository(
         if (token.isBlank()) return fail("missing_token")
         return runCatching {
             settingsRepository.setSyncStatus("syncing")
-            if (resetLocalDataFirst) {
-                clearSyncedLocalData()
-            }
             val response = executeRequest("GET", "/api/v1/sync/bootstrap", token, null)
             if (response.statusCode == 401) return fail("unauthorized")
             if (response.statusCode !in 200..299) return fail("server")
             val snapshot = parseBootstrapResponse(response.body)
+            if (resetLocalDataFirst) {
+                clearSyncedLocalData()
+            }
             mergeSnapshot(snapshot, forceSettings = resetLocalDataFirst)
             recomputeEngine?.recomputeAllDates()
             settingsRepository.setSyncStatus("synced", syncedAt = clock())

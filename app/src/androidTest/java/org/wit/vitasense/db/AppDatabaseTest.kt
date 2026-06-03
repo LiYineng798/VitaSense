@@ -175,4 +175,41 @@ class AppDatabaseTest {
             )
             assertNull(database.importLogDao().observeLatest().first())
         }
+
+    @Test
+    fun importing_demo_bundle_replaces_previous_demo_health_data() =
+        runBlocking {
+            val repository =
+                DefaultHealthRepository(
+                    database = database,
+                    heartRateDao = database.heartRateRawSampleDao(),
+                    sleepRecordDao = database.sleepRecordDao(),
+                    dailySummaryDao = database.dailySummaryDao(),
+                    riskAssessmentDao = database.riskAssessmentDao(),
+                    moodRecordDao = database.moodRecordDao(),
+                    importLogDao = database.importLogDao(),
+                    demoImportProvider = DemoImportProvider(),
+                    recomputeEngine =
+                        HealthRecomputeEngine(
+                            heartRateDao = database.heartRateRawSampleDao(),
+                            sleepRecordDao = database.sleepRecordDao(),
+                            dailySummaryDao = database.dailySummaryDao(),
+                            riskAssessmentDao = database.riskAssessmentDao(),
+                        ),
+                )
+
+            repository.importDemoBundle("normal")
+            repository.importDemoBundle("high_risk")
+
+            assertEquals(
+                setOf("demo-high_risk"),
+                database.heartRateRawSampleDao().getAllForSync().map { it.sourceBatchId }.toSet(),
+            )
+            assertEquals(
+                setOf("demo-high_risk"),
+                database.sleepRecordDao().getAllActiveForSync().map { it.sourceBatchId }.toSet(),
+            )
+            assertEquals(280, database.heartRateRawSampleDao().getAllForSync().size)
+            assertEquals(7, database.sleepRecordDao().getAllActiveForSync().size)
+        }
 }

@@ -192,6 +192,61 @@ class DefaultCloudSyncRepositoryTest {
         assertEquals(ThemeMode.DARK, settings.themeMode.value)
         assertEquals(ThemeFamily.ROSE_INDIGO, settings.themeFamily.value)
     }
+
+    @Test
+    fun failedAccountSwitchBootstrapDoesNotClearLocalSyncData() = runBlocking {
+        val settings = FakeCloudSettingsRepository(authToken = "token")
+        val moodDao = FakeCloudMoodRecordDao()
+        val heartRateDao = FakeCloudHeartRateRawSampleDao()
+        val sleepDao = FakeCloudSleepRecordDao()
+        moodDao.rows +=
+            MoodRecordEntity(
+                id = 1L,
+                date = "2026-06-02",
+                moodType = "CALM",
+                moodGroup = "POSITIVE",
+                note = "keep",
+                cloudId = "local-mood",
+            )
+        heartRateDao.rows +=
+            HeartRateRawSampleEntity(
+                id = 1L,
+                sampleTimestamp = 1770000000000,
+                date = "2026-06-02",
+                heartRate = 72,
+                sourceBatchId = "local",
+                cloudId = "local-hr",
+            )
+        sleepDao.rows +=
+            SleepRecordEntity(
+                id = 1L,
+                date = "2026-06-02",
+                startAt = 1769971200000,
+                endAt = 1769996400000,
+                durationMinutes = 420,
+                sourceBatchId = "local",
+                cloudId = "local-sleep",
+            )
+        val repository =
+            DefaultCloudSyncRepository(
+                baseUrl = "https://server.np5.top",
+                settingsRepository = settings,
+                moodRecordDao = moodDao,
+                heartRateDao = heartRateDao,
+                sleepRecordDao = sleepDao,
+                request = { _, _, _, _ -> NetworkResponse(500, """{"success":false}""") },
+            )
+
+        val result = repository.bootstrapForAccountSwitch()
+
+        assertFalse(result.success)
+        assertFalse(moodDao.cleared)
+        assertFalse(heartRateDao.cleared)
+        assertFalse(sleepDao.cleared)
+        assertEquals(listOf("local-mood"), moodDao.rows.map { it.cloudId })
+        assertEquals(listOf("local-hr"), heartRateDao.rows.map { it.cloudId })
+        assertEquals(listOf("local-sleep"), sleepDao.rows.map { it.cloudId })
+    }
 }
 
 private class FakeCloudMoodRecordDao : MoodRecordDao {

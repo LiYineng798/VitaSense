@@ -63,10 +63,19 @@ class DefaultHealthRepository(
     override suspend fun getAvailableDemoBundles(): List<DemoBundleInfo> = demoImportProvider.availableBundles()
 
     override suspend fun importDemoBundle(bundleId: String): ImportOperationResult =
-        importRawJson(
-            raw = demoImportProvider.rawBundle(bundleId),
-            sourceName = bundleId,
-        )
+        withContext(Dispatchers.IO) {
+            database.withTransaction {
+                riskAssessmentDao.clear()
+                dailySummaryDao.clear()
+                sleepRecordDao.clear()
+                heartRateDao.clear()
+                importLogDao.clear()
+            }
+            importRawJson(
+                raw = demoImportProvider.rawBundle(bundleId),
+                sourceName = bundleId,
+            )
+        }
 
     override suspend fun importRawJson(
         raw: String,

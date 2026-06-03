@@ -133,14 +133,33 @@ def main():
         sleep = client.post("/api/v1/sync/push", json=sleep_tie, headers=auth_headers(token_a))
         assert sleep.status_code == 200, sleep.text
 
+        sleep_new_source = {
+            "sleep_records": [
+                {
+                    "id": "sleep-a-3",
+                    "date": "2026-06-02",
+                    "start_at": 1769971200000,
+                    "end_at": 1769992800000,
+                    "duration_minutes": 360,
+                    "avg_heart_rate": 66.0,
+                    "heart_rate_variability_hint": 28.0,
+                    "source_batch_id": "new-demo",
+                    "updated_at": 1770000000000,
+                    "deleted_at": None,
+                }
+            ]
+        }
+        sleep_source = client.post("/api/v1/sync/push", json=sleep_new_source, headers=auth_headers(token_a))
+        assert sleep_source.status_code == 200, sleep_source.text
+
         bootstrap_a = client.get("/api/v1/sync/bootstrap", headers=auth_headers(token_a))
         assert bootstrap_a.status_code == 200, bootstrap_a.text
         body_a = bootstrap_a.json()
         assert body_a["settings"]["theme_mode"] == "dark"
         assert len(body_a["heart_rate_samples"]) == 1
         assert body_a["mood_records"][0]["deleted_at"] == 1770000000002
-        assert body_a["sleep_records"][0]["id"] == "sleep-a-2"
-        assert body_a["sleep_records"][0]["duration_minutes"] == 460
+        assert body_a["sleep_records"][0]["id"] == "sleep-a-3"
+        assert body_a["sleep_records"][0]["duration_minutes"] == 360
 
         bootstrap_b = client.get("/api/v1/sync/bootstrap", headers=auth_headers(token_b))
         assert bootstrap_b.status_code == 200, bootstrap_b.text

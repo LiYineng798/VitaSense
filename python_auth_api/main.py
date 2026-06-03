@@ -719,12 +719,13 @@ def sync_push(payload: SyncPushRequest, authorization: str | None = Header(defau
 
         for sleep in payload.sleep_records:
             existing = connection.execute(
-                "SELECT updated_at, duration_minutes FROM cloud_sleep_records WHERE user_id = ? AND date = ?",
+                "SELECT updated_at, duration_minutes, source_batch_id FROM cloud_sleep_records WHERE user_id = ? AND date = ?",
                 (user_id, sleep.date),
             ).fetchone()
             should_write = (
                 existing is None
                 or sleep.updated_at > existing["updated_at"]
+                or (sleep.updated_at == existing["updated_at"] and sleep.source_batch_id != existing["source_batch_id"])
                 or (sleep.updated_at == existing["updated_at"] and sleep.duration_minutes > existing["duration_minutes"])
             )
             if should_write:
