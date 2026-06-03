@@ -102,3 +102,61 @@ def test_family_create_join_permissions_and_privacy():
         assert "heart_rate" not in raw
         assert "sleep_minutes" not in raw
         assert any(item["user_id"] == member["id"] and item["mood_type"] == "CALM" for item in body["family"]["members"])
+
+
+def test_family_support_validation_and_dedupe():
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+        module = importlib.import_module("main")
+        module.DB_PATH = Path(tmp) / "auth.db"
+        module.initialize_database()
+        client = TestClient(module.app)
+
+        token_owner, owner = register(client, "support-owner")
+        token_member, member = register(client, "support-member")
+
+        created = client.post("/api/v1/families", json={"name": "Care Team"}, headers=auth_headers(token_owner))
+        assert created.status_code == 200, created.text
+        family = created.json()["family"]
+        joined = client.post("/api/v1/families/join", json={"invite_code": family["invite_code"]}, headers=auth_headers(token_member))
+        assert joined.status_code == 200, joined.text
+
+        invalid = client.post(
+            f"/api/v1/families/{family['id']}/supports",
+            json={"receiver_user_id": member["id"], "support_type": "custom_text"},
+            headers=auth_headers(token_owner),
+        )
+        assert invalid.status_code == 400, invalid.text
+        assert invalid.json()["code"] == "invalid_support_type"
+
+        self_support = client.post(
+            f"/api/v1/families/{family['id']}/supports",
+            json={"receiver_user_id": owner["id"], "support_type": "proud_of_you"},
+            headers=auth_headers(token_owner),
+        )
+        assert self_support.status_code == 400, self_support.text
+        assert self_support.json()["code"] == "cannot_support_self"
+
+        sent = client.post(
+            f"/api/v1/families/{family['id']}/supports",
+            json={"receiver_user_id": member["id"], "support_type": "proud_of_you"},
+            headers=auth_headers(token_owner),
+        )
+        assert sent.status_code == 200, sent.text
+
+        duplicate = client.post(
+            f"/api/v1/families/{family['id']}/supports",
+            json={"receiver_user_id": member["id"], "support_type": "proud_of_you"},
+            headers=auth_headers(token_owner),
+        )
+        assert duplicate.status_code == 409, duplicate.text
+        assert duplicate.json()["code"] == "duplicate_support"
+
+        family_body = client.get("/api/v1/families/me", headers=auth_headers(token_member)).json()["family"]
+        member_card = next(item for item in family_body["members"] if item["user_id"] == member["id"])
+        assert member_card["support_count_today"] == 1
+        assert member_card["latest_support_type"] == "proud_of_you"
+
+
+if __name__ == "__main__":
+    test_family_create_join_permissions_and_privacy()
+    test_family_support_validation_and_dedupe()

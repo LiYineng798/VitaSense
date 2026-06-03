@@ -8,6 +8,15 @@ This directory contains a standalone local-first authentication API for VitaSens
 - `POST /api/v1/auth/register`
 - `POST /api/v1/auth/login`
 - `GET /api/v1/auth/me`
+- `POST /api/v1/families`
+- `GET /api/v1/families/me`
+- `POST /api/v1/families/join`
+- `PATCH /api/v1/families/{family_id}`
+- `POST /api/v1/families/{family_id}/invite-code/regenerate`
+- `DELETE /api/v1/families/{family_id}/members/{member_user_id}`
+- `DELETE /api/v1/families/{family_id}/members/me`
+- `POST /api/v1/families/{family_id}/status`
+- `POST /api/v1/families/{family_id}/supports`
 
 ## Local Run
 

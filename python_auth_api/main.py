@@ -530,6 +530,149 @@ def require_family_user(authorization: str | None) -> int | JSONResponse:
     return user_id
 
 
+def family_error(status_code: int, code: str, message: str) -> JSONResponse:
+    return JSONResponse(
+        status_code=status_code,
+        content={
+            "success": False,
+            "code": code,
+            "message": message,
+        },
+    )
+
+
+def get_family_membership_for_family(connection: sqlite3.Connection, family_id: int, user_id: int) -> sqlite3.Row | None:
+    return connection.execute(
+        """
+        SELECT family_members.family_id, family_members.user_id, family_members.role
+        FROM family_members
+        WHERE family_id = ? AND user_id = ?
+        LIMIT 1
+        """.strip(),
+        (family_id, user_id),
+    ).fetchone()
+
+
+def require_family_membership(
+    connection: sqlite3.Connection,
+    family_id: int,
+    user_id: int,
+) -> sqlite3.Row | JSONResponse:
+    membership = get_family_membership_for_family(connection, family_id, user_id)
+    if membership is None:
+        return family_error(404, "family_not_found", "Family not found.")
+    return membership
+
+
+def require_family_owner(
+    connection: sqlite3.Connection,
+    family_id: int,
+    user_id: int,
+) -> sqlite3.Row | JSONResponse:
+    membership = require_family_membership(connection, family_id, user_id)
+    if isinstance(membership, JSONResponse):
+        return membership
+    if membership["role"] != "owner":
+        return family_error(403, "permission_denied", "Only the family owner can perform this action.")
+    return membership
+
+
+def serialize_family(connection: sqlite3.Connection, family_id: int, current_user_id: int) -> dict[str, Any]:
+    family = connection.execute(
+        """
+        SELECT id, name, invite_code, created_by_user_id, created_at, updated_at
+        FROM families
+        WHERE id = ?
+        LIMIT 1
+        """.strip(),
+        (family_id,),
+    ).fetchone()
+    if family is None:
+        raise ValueError("Family not found.")
+
+    current_membership = get_family_membership_for_family(connection, family_id, current_user_id)
+    if current_membership is None:
+        raise ValueError("Current user is not a family member.")
+
+    support_date = today_key()
+    rows = connection.execute(
+        """
+        SELECT
+            family_members.user_id,
+            family_members.role,
+            family_members.joined_at,
+            users.full_name,
+            users.email,
+            users.username,
+            family_status_snapshots.mood_type,
+            family_status_snapshots.mood_note,
+            family_status_snapshots.status_label,
+            family_status_snapshots.updated_at AS status_updated_at,
+            (
+                SELECT COUNT(*)
+                FROM family_supports
+                WHERE family_supports.family_id = family_members.family_id
+                    AND family_supports.receiver_user_id = family_members.user_id
+                    AND family_supports.support_date = ?
+            ) AS support_count_today,
+            (
+                SELECT family_supports.support_type
+                FROM family_supports
+                WHERE family_supports.family_id = family_members.family_id
+                    AND family_supports.receiver_user_id = family_members.user_id
+                    AND family_supports.support_date = ?
+                ORDER BY family_supports.sent_at DESC, family_supports.id DESC
+                LIMIT 1
+            ) AS latest_support_type
+        FROM family_members
+        INNER JOIN users ON users.id = family_members.user_id
+        LEFT JOIN family_status_snapshots
+            ON family_status_snapshots.family_id = family_members.family_id
+            AND family_status_snapshots.user_id = family_members.user_id
+        WHERE family_members.family_id = ?
+        ORDER BY family_members.role = 'owner' DESC, family_members.joined_at ASC, users.full_name ASC
+        """.strip(),
+        (support_date, support_date, family_id),
+    ).fetchall()
+
+    members = [
+        {
+            "user_id": row["user_id"],
+            "full_name": row["full_name"],
+            "email": row["email"],
+            "username": row["username"],
+            "role": row["role"],
+            "joined_at": row["joined_at"],
+            "mood_type": row["mood_type"],
+            "mood_note": row["mood_note"],
+            "status_label": row["status_label"],
+            "status_updated_at": row["status_updated_at"],
+            "support_count_today": row["support_count_today"],
+            "latest_support_type": row["latest_support_type"],
+        }
+        for row in rows
+    ]
+
+    return {
+        "id": family["id"],
+        "name": family["name"],
+        "invite_code": family["invite_code"],
+        "created_by_user_id": family["created_by_user_id"],
+        "created_at": family["created_at"],
+        "updated_at": family["updated_at"],
+        "current_user_role": current_membership["role"],
+        "members": members,
+    }
+
+
+def family_response(connection: sqlite3.Connection, family_id: int, current_user_id: int, message: str) -> dict[str, Any]:
+    return {
+        "success": True,
+        "message": message,
+        "family": serialize_family(connection, family_id, current_user_id),
+    }
+
+
 def serialize_sync_settings(row: sqlite3.Row | None) -> dict[str, Any] | None:
     if row is None:
         return None
@@ -773,6 +916,262 @@ def me(authorization: str | None = Header(default=None)):
         "message": "Current user resolved.",
         "user": serialize_user(session_row),
     }
+
+
+@app.post("/api/v1/families")
+def create_family(payload: FamilyCreateRequest, authorization: str | None = Header(default=None)):
+    user_id = require_family_user(authorization)
+    if isinstance(user_id, JSONResponse):
+        return user_id
+
+    name = payload.name.strip()
+    if not name:
+        return family_error(400, "invalid_family_name", "Family name is required.")
+
+    with get_connection() as connection:
+        if get_family_membership(connection, user_id) is not None:
+            return family_error(409, "already_in_family", "User already belongs to a family.")
+
+        timestamp = now_millis()
+        invite_code = generate_invite_code(connection)
+        cursor = connection.execute(
+            """
+            INSERT INTO families(name, invite_code, created_by_user_id, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?)
+            """.strip(),
+            (name, invite_code, user_id, timestamp, timestamp),
+        )
+        family_id = int(cursor.lastrowid)
+        connection.execute(
+            """
+            INSERT INTO family_members(family_id, user_id, role, joined_at)
+            VALUES (?, ?, ?, ?)
+            """.strip(),
+            (family_id, user_id, "owner", timestamp),
+        )
+        body = family_response(connection, family_id, user_id, "Family created.")
+        connection.commit()
+
+    return body
+
+
+@app.get("/api/v1/families/me")
+def get_my_family(authorization: str | None = Header(default=None)):
+    user_id = require_family_user(authorization)
+    if isinstance(user_id, JSONResponse):
+        return user_id
+
+    with get_connection() as connection:
+        membership = get_family_membership(connection, user_id)
+        if membership is None:
+            return family_error(404, "family_not_found", "User does not belong to a family.")
+        return family_response(connection, int(membership["family_id"]), user_id, "Family resolved.")
+
+
+@app.post("/api/v1/families/join")
+def join_family(payload: FamilyJoinRequest, authorization: str | None = Header(default=None)):
+    user_id = require_family_user(authorization)
+    if isinstance(user_id, JSONResponse):
+        return user_id
+
+    invite_code = payload.invite_code.strip().upper()
+    if not invite_code:
+        return family_error(404, "invalid_invite_code", "Invite code is invalid.")
+
+    with get_connection() as connection:
+        if get_family_membership(connection, user_id) is not None:
+            return family_error(409, "already_in_family", "User already belongs to a family.")
+
+        family = connection.execute(
+            "SELECT id FROM families WHERE invite_code = ? LIMIT 1",
+            (invite_code,),
+        ).fetchone()
+        if family is None:
+            return family_error(404, "invalid_invite_code", "Invite code is invalid.")
+
+        family_id = int(family["id"])
+        connection.execute(
+            """
+            INSERT INTO family_members(family_id, user_id, role, joined_at)
+            VALUES (?, ?, ?, ?)
+            """.strip(),
+            (family_id, user_id, "member", now_millis()),
+        )
+        body = family_response(connection, family_id, user_id, "Family joined.")
+        connection.commit()
+
+    return body
+
+
+@app.patch("/api/v1/families/{family_id}")
+def rename_family(family_id: int, payload: FamilyRenameRequest, authorization: str | None = Header(default=None)):
+    user_id = require_family_user(authorization)
+    if isinstance(user_id, JSONResponse):
+        return user_id
+
+    name = payload.name.strip()
+    if not name:
+        return family_error(400, "invalid_family_name", "Family name is required.")
+
+    with get_connection() as connection:
+        owner = require_family_owner(connection, family_id, user_id)
+        if isinstance(owner, JSONResponse):
+            return owner
+        connection.execute(
+            "UPDATE families SET name = ?, updated_at = ? WHERE id = ?",
+            (name, now_millis(), family_id),
+        )
+        body = family_response(connection, family_id, user_id, "Family updated.")
+        connection.commit()
+
+    return body
+
+
+@app.post("/api/v1/families/{family_id}/invite-code/regenerate")
+def regenerate_family_invite_code(family_id: int, authorization: str | None = Header(default=None)):
+    user_id = require_family_user(authorization)
+    if isinstance(user_id, JSONResponse):
+        return user_id
+
+    with get_connection() as connection:
+        owner = require_family_owner(connection, family_id, user_id)
+        if isinstance(owner, JSONResponse):
+            return owner
+        connection.execute(
+            "UPDATE families SET invite_code = ?, updated_at = ? WHERE id = ?",
+            (generate_invite_code(connection), now_millis(), family_id),
+        )
+        body = family_response(connection, family_id, user_id, "Invite code regenerated.")
+        connection.commit()
+
+    return body
+
+
+@app.delete("/api/v1/families/{family_id}/members/{member_user_id}")
+def remove_family_member(family_id: int, member_user_id: int, authorization: str | None = Header(default=None)):
+    user_id = require_family_user(authorization)
+    if isinstance(user_id, JSONResponse):
+        return user_id
+
+    with get_connection() as connection:
+        owner = require_family_owner(connection, family_id, user_id)
+        if isinstance(owner, JSONResponse):
+            return owner
+        member = get_family_membership_for_family(connection, family_id, member_user_id)
+        if member is None:
+            return family_error(404, "member_not_found", "Family member not found.")
+        if member["role"] == "owner":
+            return family_error(400, "cannot_remove_owner", "The family owner cannot be removed.")
+
+        connection.execute(
+            "DELETE FROM family_members WHERE family_id = ? AND user_id = ?",
+            (family_id, member_user_id),
+        )
+        body = family_response(connection, family_id, user_id, "Family member removed.")
+        connection.commit()
+
+    return body
+
+
+@app.delete("/api/v1/families/{family_id}/members/me")
+def leave_family(family_id: int, authorization: str | None = Header(default=None)):
+    user_id = require_family_user(authorization)
+    if isinstance(user_id, JSONResponse):
+        return user_id
+
+    with get_connection() as connection:
+        membership = require_family_membership(connection, family_id, user_id)
+        if isinstance(membership, JSONResponse):
+            return membership
+        if membership["role"] == "owner":
+            return family_error(400, "owner_cannot_leave", "The family owner cannot leave in this version.")
+
+        connection.execute(
+            "DELETE FROM family_members WHERE family_id = ? AND user_id = ?",
+            (family_id, user_id),
+        )
+        connection.commit()
+
+    return {
+        "success": True,
+        "message": "Family left.",
+    }
+
+
+@app.post("/api/v1/families/{family_id}/status")
+def update_family_status(family_id: int, payload: FamilyStatusRequest, authorization: str | None = Header(default=None)):
+    user_id = require_family_user(authorization)
+    if isinstance(user_id, JSONResponse):
+        return user_id
+
+    if not payload.status_label.strip():
+        return family_error(400, "invalid_status_label", "Status label is required.")
+
+    with get_connection() as connection:
+        membership = require_family_membership(connection, family_id, user_id)
+        if isinstance(membership, JSONResponse):
+            return membership
+        connection.execute(
+            """
+            INSERT INTO family_status_snapshots(family_id, user_id, mood_type, mood_note, status_label, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(family_id, user_id) DO UPDATE SET
+                mood_type = excluded.mood_type,
+                mood_note = excluded.mood_note,
+                status_label = excluded.status_label,
+                updated_at = excluded.updated_at
+            """.strip(),
+            (
+                family_id,
+                user_id,
+                payload.mood_type.strip() if payload.mood_type is not None else None,
+                payload.mood_note.strip() if payload.mood_note is not None else None,
+                payload.status_label.strip(),
+                payload.updated_at,
+            ),
+        )
+        body = family_response(connection, family_id, user_id, "Family status updated.")
+        connection.commit()
+
+    return body
+
+
+@app.post("/api/v1/families/{family_id}/supports")
+def send_family_support(family_id: int, payload: FamilySupportRequest, authorization: str | None = Header(default=None)):
+    user_id = require_family_user(authorization)
+    if isinstance(user_id, JSONResponse):
+        return user_id
+
+    support_type = payload.support_type.strip()
+    if support_type not in FAMILY_SUPPORT_TYPES:
+        return family_error(400, "invalid_support_type", "Support type is invalid.")
+    if payload.receiver_user_id == user_id:
+        return family_error(400, "cannot_support_self", "Users cannot send support to themselves.")
+
+    with get_connection() as connection:
+        sender = require_family_membership(connection, family_id, user_id)
+        if isinstance(sender, JSONResponse):
+            return sender
+        receiver = get_family_membership_for_family(connection, family_id, payload.receiver_user_id)
+        if receiver is None:
+            return family_error(404, "receiver_not_found", "Support receiver is not a family member.")
+
+        timestamp = now_millis()
+        try:
+            connection.execute(
+                """
+                INSERT INTO family_supports(family_id, sender_user_id, receiver_user_id, support_type, support_date, sent_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """.strip(),
+                (family_id, user_id, payload.receiver_user_id, support_type, today_key(timestamp), timestamp),
+            )
+        except sqlite3.IntegrityError:
+            return family_error(409, "duplicate_support", "Support has already been sent today.")
+
+        body = family_response(connection, family_id, user_id, "Support sent.")
+        connection.commit()
+
+    return body
 
 
 @app.get("/api/v1/sync/bootstrap")
