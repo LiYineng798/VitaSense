@@ -2,11 +2,16 @@ package org.wit.vitasense.ui.family
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.wit.vitasense.model.AuthUser
@@ -26,6 +31,7 @@ class FamilyViewModel(
     private val modelScope = scope ?: viewModelScope
     private val loading = MutableStateFlow(false)
     private val errorMessage = MutableStateFlow<String?>(null)
+    private var runningAction: Job? = null
 
     val state: StateFlow<FamilyScreenState> =
         combine(
@@ -49,9 +55,17 @@ class FamilyViewModel(
 
     init {
         modelScope.launch {
-            if (authRepository.getCurrentUser() != null) {
-                refresh()
-            }
+            authRepository.observeCurrentUser()
+                .map { user -> user?.id }
+                .distinctUntilChanged()
+                .collect { userId ->
+                    errorMessage.value = null
+                    runningAction?.cancelAndJoin()
+                    loading.value = false
+                    if (userId != null) {
+                        refresh()
+                    }
+                }
         }
     }
 
@@ -138,12 +152,30 @@ class FamilyViewModel(
     }
 
     private fun runFamilyAction(action: suspend () -> FamilyResult) {
-        if (loading.value) return
-        modelScope.launch {
-            loading.value = true
-            applyResult(action())
-            loading.value = false
-        }
+        if (runningAction?.isActive == true) return
+        loading.value = true
+        runningAction =
+            modelScope.launch {
+                try {
+                    applyResult(action())
+                } catch (exception: CancellationException) {
+                    throw exception
+                } catch (_: Exception) {
+                    applyResult(
+                        FamilyResult.Error(
+                            code = "unknown",
+                            message = familyErrorMessage("unknown"),
+                        ),
+                    )
+                } finally {
+                    loading.value = false
+                }
+            }
+    }
+
+    override fun onCleared() {
+        runningAction = null
+        super.onCleared()
     }
 
     private fun applyResult(result: FamilyResult) {

@@ -3,6 +3,7 @@ package org.wit.vitasense.ui.family
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -73,6 +74,128 @@ class FamilyViewModelTest {
             Unit
         }
 
+    @Test
+    fun refreshes_family_when_auth_user_transitions_from_null_to_user() =
+        runBlocking {
+            val scope = CoroutineScope(Job() + Dispatchers.Unconfined)
+            val authRepository = FakeAuthRepository(null)
+            val familyRepository = FakeFamilyRepository()
+            val viewModel =
+                FamilyViewModel(
+                    authRepository = authRepository,
+                    familyRepository = familyRepository,
+                    scope = scope,
+                )
+            val collector = collectState(viewModel, scope)
+
+            yield()
+            authRepository.setCurrentUser(AuthUser(1, "Ava Stone", "ava@example.com", "ava", "2000-01-02"))
+            yield()
+
+            assertEquals(1, familyRepository.refreshCalls)
+
+            collector.cancel()
+            scope.coroutineContext[Job]?.cancel()
+            Unit
+        }
+
+    @Test
+    fun blank_create_family_sets_validation_error() =
+        runBlocking {
+            val scope = CoroutineScope(Job() + Dispatchers.Unconfined)
+            val viewModel =
+                FamilyViewModel(
+                    authRepository = FakeAuthRepository(AuthUser(1, "Ava Stone", "ava@example.com", "ava", "2000-01-02")),
+                    familyRepository = FakeFamilyRepository(),
+                    scope = scope,
+                )
+            val collector = collectState(viewModel, scope)
+
+            viewModel.createFamily("   ")
+            yield()
+
+            assertEquals("Family name is required.", viewModel.state.value.errorMessage)
+
+            collector.cancel()
+            scope.coroutineContext[Job]?.cancel()
+            Unit
+        }
+
+    @Test
+    fun repository_error_sets_error_message_and_clears_loading() =
+        runBlocking {
+            val scope = CoroutineScope(Job() + Dispatchers.Unconfined)
+            val familyRepository =
+                FakeFamilyRepository(
+                    createResult = FamilyResult.Error("server", "Family service is unavailable right now."),
+                )
+            val viewModel =
+                FamilyViewModel(
+                    authRepository = FakeAuthRepository(AuthUser(1, "Ava Stone", "ava@example.com", "ava", "2000-01-02")),
+                    familyRepository = familyRepository,
+                    scope = scope,
+                )
+            val collector = collectState(viewModel, scope)
+
+            viewModel.createFamily("Home")
+            yield()
+
+            assertEquals("Family service is unavailable right now.", viewModel.state.value.errorMessage)
+            assertEquals(false, viewModel.state.value.isLoading)
+
+            collector.cancel()
+            scope.coroutineContext[Job]?.cancel()
+            Unit
+        }
+
+    @Test
+    fun repository_exception_sets_fallback_error_and_clears_loading() =
+        runBlocking {
+            val scope = CoroutineScope(Job() + Dispatchers.Unconfined)
+            val familyRepository = FakeFamilyRepository(createException = IllegalStateException("boom"))
+            val viewModel =
+                FamilyViewModel(
+                    authRepository = FakeAuthRepository(AuthUser(1, "Ava Stone", "ava@example.com", "ava", "2000-01-02")),
+                    familyRepository = familyRepository,
+                    scope = scope,
+                )
+            val collector = collectState(viewModel, scope)
+
+            viewModel.createFamily("Home")
+            yield()
+
+            assertEquals("Unable to update Family right now.", viewModel.state.value.errorMessage)
+            assertEquals(false, viewModel.state.value.isLoading)
+
+            collector.cancel()
+            scope.coroutineContext[Job]?.cancel()
+            Unit
+        }
+
+    @Test
+    fun rapid_duplicate_create_family_calls_only_start_one_action() =
+        runBlocking {
+            val scope = CoroutineScope(Job() + Dispatchers.Unconfined)
+            val familyRepository = FakeFamilyRepository(createDelayMillis = 1_000)
+            val viewModel =
+                FamilyViewModel(
+                    authRepository = FakeAuthRepository(AuthUser(1, "Ava Stone", "ava@example.com", "ava", "2000-01-02")),
+                    familyRepository = familyRepository,
+                    scope = scope,
+                )
+            val collector = collectState(viewModel, scope)
+
+            viewModel.createFamily("Home")
+            viewModel.createFamily("Home")
+            yield()
+
+            assertEquals(1, familyRepository.createCalls)
+
+            collector.cancel()
+            scope.coroutineContext[Job]?.cancel()
+            Unit
+        }
+
     private fun collectState(
         viewModel: FamilyViewModel,
         scope: CoroutineScope,
@@ -90,6 +213,10 @@ private class FakeAuthRepository(
 
     override suspend fun getCurrentUser(): AuthUser? = currentUser.value
 
+    fun setCurrentUser(user: AuthUser?) {
+        currentUser.value = user
+    }
+
     override suspend fun register(
         fullName: String,
         email: String,
@@ -106,7 +233,11 @@ private class FakeAuthRepository(
     override suspend fun logout() = Unit
 }
 
-private class FakeFamilyRepository : FamilyRepository {
+private class FakeFamilyRepository(
+    private val createResult: FamilyResult? = null,
+    private val createException: Exception? = null,
+    private val createDelayMillis: Long = 0,
+) : FamilyRepository {
     private val cachedFamily = MutableStateFlow<Family?>(null)
     var refreshCalls = 0
         private set
@@ -124,6 +255,9 @@ private class FakeFamilyRepository : FamilyRepository {
 
     override suspend fun createFamily(name: String): FamilyResult {
         createCalls++
+        if (createDelayMillis > 0) delay(createDelayMillis)
+        createException?.let { throw it }
+        createResult?.let { return it }
         createdName = name
         val family =
             Family(
