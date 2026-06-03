@@ -259,6 +259,7 @@ def initialize_database() -> None:
             ON cloud_sleep_records(user_id, date);
             """.strip(),
         )
+        migrate_family_supports_table(connection)
         migrate_sync_tables(connection)
 
 
@@ -283,6 +284,80 @@ def migrate_sync_tables(connection: sqlite3.Connection) -> None:
         rebuild_cloud_heart_rate_samples(connection)
     if table_exists(connection, "cloud_sleep_records") and has_global_id_primary_key(connection, "cloud_sleep_records"):
         rebuild_cloud_sleep_records(connection)
+
+
+def family_supports_has_composite_member_foreign_keys(connection: sqlite3.Connection) -> bool:
+    if not table_exists(connection, "family_supports"):
+        return True
+
+    foreign_key_groups: dict[int, list[sqlite3.Row]] = {}
+    for row in connection.execute("PRAGMA foreign_key_list(family_supports)").fetchall():
+        foreign_key_groups.setdefault(row["id"], []).append(row)
+
+    required_mappings = [
+        {"family_id": "family_id", "sender_user_id": "user_id"},
+        {"family_id": "family_id", "receiver_user_id": "user_id"},
+    ]
+    actual_mappings: list[dict[str, str]] = []
+    for rows in foreign_key_groups.values():
+        if rows[0]["table"] != "family_members":
+            continue
+        actual_mappings.append({row["from"]: row["to"] for row in rows})
+
+    return all(mapping in actual_mappings for mapping in required_mappings)
+
+
+def migrate_family_supports_table(connection: sqlite3.Connection) -> None:
+    if not family_supports_has_composite_member_foreign_keys(connection):
+        rebuild_family_supports(connection)
+
+
+def rebuild_family_supports(connection: sqlite3.Connection) -> None:
+    connection.executescript(
+        """
+        ALTER TABLE family_supports RENAME TO family_supports_old;
+
+        CREATE TABLE family_supports (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            family_id INTEGER NOT NULL,
+            sender_user_id INTEGER NOT NULL,
+            receiver_user_id INTEGER NOT NULL,
+            support_type TEXT NOT NULL,
+            support_date TEXT NOT NULL,
+            sent_at INTEGER NOT NULL,
+            UNIQUE(family_id, sender_user_id, receiver_user_id, support_type, support_date),
+            FOREIGN KEY(family_id) REFERENCES families(id) ON DELETE CASCADE,
+            FOREIGN KEY(family_id, sender_user_id) REFERENCES family_members(family_id, user_id) ON DELETE CASCADE,
+            FOREIGN KEY(family_id, receiver_user_id) REFERENCES family_members(family_id, user_id) ON DELETE CASCADE
+        );
+
+        INSERT OR IGNORE INTO family_supports(
+            id, family_id, sender_user_id, receiver_user_id, support_type, support_date, sent_at
+        )
+        SELECT
+            family_supports_old.id,
+            family_supports_old.family_id,
+            family_supports_old.sender_user_id,
+            family_supports_old.receiver_user_id,
+            family_supports_old.support_type,
+            family_supports_old.support_date,
+            family_supports_old.sent_at
+        FROM family_supports_old
+        INNER JOIN families
+            ON families.id = family_supports_old.family_id
+        INNER JOIN family_members AS sender
+            ON sender.family_id = family_supports_old.family_id
+            AND sender.user_id = family_supports_old.sender_user_id
+        INNER JOIN family_members AS receiver
+            ON receiver.family_id = family_supports_old.family_id
+            AND receiver.user_id = family_supports_old.receiver_user_id;
+
+        DROP TABLE family_supports_old;
+
+        CREATE INDEX IF NOT EXISTS idx_family_supports_receiver_date
+        ON family_supports(family_id, receiver_user_id, support_date);
+        """.strip(),
+    )
 
 
 def rebuild_cloud_mood_records(connection: sqlite3.Connection) -> None:
