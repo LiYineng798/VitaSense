@@ -2,6 +2,7 @@ package org.wit.vitasense.data.repository
 
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import java.util.concurrent.CancellationException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -106,6 +107,88 @@ class DefaultFamilyRepositoryTest {
 
             assertTrue(result is FamilyResult.Error)
             assertEquals("unexpected_response", (result as FamilyResult.Error).code)
+        }
+
+    @Test
+    fun refreshFamily_with_blank_token_clears_cached_family_and_skips_network() =
+        runBlocking {
+            var token = "token-a"
+            var requestCount = 0
+            val repository =
+                DefaultFamilyRepository(
+                    baseUrlProvider = { "https://server.np5.top" },
+                    tokenProvider = { token },
+                    request = { _, _, _, _ ->
+                        requestCount += 1
+                        FamilyNetworkResponse(200, familyEnvelope())
+                    },
+                )
+
+            repository.refreshFamily()
+            token = " "
+
+            val result = repository.refreshFamily()
+
+            assertTrue(result is FamilyResult.Error)
+            assertEquals("missing_token", (result as FamilyResult.Error).code)
+            assertEquals(1, requestCount)
+            assertEquals(null, repository.observeCachedFamily().first())
+        }
+
+    @Test
+    fun refreshFamily_with_unauthorized_status_clears_cached_family_and_returns_error() =
+        runBlocking {
+            var statusCode = 200
+            val repository =
+                DefaultFamilyRepository(
+                    baseUrlProvider = { "https://server.np5.top" },
+                    tokenProvider = { "token-a" },
+                    request = { _, _, _, _ ->
+                        FamilyNetworkResponse(statusCode, familyEnvelope())
+                    },
+                )
+
+            repository.refreshFamily()
+            statusCode = 401
+
+            val result = repository.refreshFamily()
+
+            assertTrue(result is FamilyResult.Error)
+            assertEquals("unauthorized", (result as FamilyResult.Error).code)
+            assertEquals(null, repository.observeCachedFamily().first())
+        }
+
+    @Test
+    fun refreshFamily_with_server_error_and_success_body_does_not_cache_success() =
+        runBlocking {
+            val repository =
+                DefaultFamilyRepository(
+                    baseUrlProvider = { "https://server.np5.top" },
+                    tokenProvider = { "token-a" },
+                    request = { _, _, _, _ ->
+                        FamilyNetworkResponse(500, familyEnvelope())
+                    },
+                )
+
+            val result = repository.refreshFamily()
+
+            assertTrue(result is FamilyResult.Error)
+            assertEquals(null, repository.observeCachedFamily().first())
+        }
+
+    @Test(expected = CancellationException::class)
+    fun refreshFamily_rethrows_cancellation_exception() =
+        runBlocking {
+            val repository =
+                DefaultFamilyRepository(
+                    baseUrlProvider = { "https://server.np5.top" },
+                    tokenProvider = { "token-a" },
+                    request = { _, _, _, _ ->
+                        throw CancellationException("cancelled")
+                    },
+                )
+
+            repository.refreshFamily()
         }
 
     private fun familyEnvelope(): String =

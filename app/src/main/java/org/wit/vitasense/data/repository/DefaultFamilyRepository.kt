@@ -3,6 +3,7 @@ package org.wit.vitasense.data.repository
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -115,12 +116,15 @@ class DefaultFamilyRepository(
         withContext(Dispatchers.IO) {
             val token = tokenProvider().trim()
             if (token.isBlank()) {
+                cachedFamily.value = null
                 return@withContext FamilyResult.Error("missing_token", familyErrorMessage("missing_token"))
             }
 
             val response =
                 try {
                     request(method, baseUrlProvider().trim().removeSuffix("/") + path, token, body)
+                } catch (exception: CancellationException) {
+                    throw exception
                 } catch (_: IOException) {
                     return@withContext FamilyResult.Error("network", familyErrorMessage("network"))
                 } catch (_: SecurityException) {
@@ -132,21 +136,46 @@ class DefaultFamilyRepository(
                     )
                 }
 
-            val result =
-                try {
-                    parseFamilyEnvelope(response.body)
-                } catch (_: Exception) {
-                    return@withContext FamilyResult.Error(
-                        "unexpected_response",
-                        familyErrorMessage("unexpected_response"),
-                    )
-                }
+            val result = response.toFamilyResult()
 
             when (result) {
                 is FamilyResult.Success -> cachedFamily.value = result.family
                 is FamilyResult.Error -> Unit
             }
             result
+        }
+
+    private fun FamilyNetworkResponse.toFamilyResult(): FamilyResult =
+        when (statusCode) {
+            in 200..299 -> parseSuccessEnvelope()
+            401, 403 -> {
+                cachedFamily.value = null
+                FamilyResult.Error("unauthorized", familyErrorMessage("unauthorized"))
+            }
+            in 500..599 -> FamilyResult.Error("server", familyErrorMessage("server"))
+            in 400..499 -> parseErrorEnvelope("unexpected_response")
+            else -> parseErrorEnvelope("unexpected_response")
+        }
+
+    private fun FamilyNetworkResponse.parseSuccessEnvelope(): FamilyResult =
+        try {
+            parseFamilyEnvelope(body)
+        } catch (_: Exception) {
+            FamilyResult.Error(
+                "unexpected_response",
+                familyErrorMessage("unexpected_response"),
+            )
+        }
+
+    private fun FamilyNetworkResponse.parseErrorEnvelope(fallbackCode: String): FamilyResult =
+        try {
+            when (val result = parseFamilyEnvelope(body)) {
+                is FamilyResult.Error -> result
+                is FamilyResult.Success ->
+                    FamilyResult.Error(fallbackCode, familyErrorMessage(fallbackCode))
+            }
+        } catch (_: Exception) {
+            FamilyResult.Error(fallbackCode, familyErrorMessage(fallbackCode))
         }
 }
 

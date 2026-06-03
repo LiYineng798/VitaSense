@@ -135,7 +135,9 @@ fun familyErrorMessage(code: String): String =
         "duplicate_support" -> "You already sent this support today."
         "invalid_support_type" -> "Choose one of the fixed support options."
         "missing_token" -> "Sign in to use Family."
+        "unauthorized" -> "Sign in again to use Family."
         "network" -> "Unable to reach the server."
+        "server" -> "Family service is unavailable right now."
         "unexpected_response" -> "Unexpected server response."
         else -> "Unable to update Family right now."
     }
