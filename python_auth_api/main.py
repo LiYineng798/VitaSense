@@ -135,7 +135,7 @@ def initialize_database() -> None:
             );
 
             CREATE TABLE IF NOT EXISTS cloud_mood_records (
-                id TEXT PRIMARY KEY,
+                id TEXT NOT NULL,
                 user_id INTEGER NOT NULL,
                 date TEXT NOT NULL,
                 mood_type TEXT NOT NULL,
@@ -144,6 +144,7 @@ def initialize_database() -> None:
                 created_at INTEGER NOT NULL,
                 updated_at INTEGER NOT NULL,
                 deleted_at INTEGER,
+                PRIMARY KEY(user_id, id),
                 FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
             );
 
@@ -151,13 +152,14 @@ def initialize_database() -> None:
             ON cloud_mood_records(user_id, date);
 
             CREATE TABLE IF NOT EXISTS cloud_heart_rate_samples (
-                id TEXT PRIMARY KEY,
+                id TEXT NOT NULL,
                 user_id INTEGER NOT NULL,
                 sample_timestamp INTEGER NOT NULL,
                 date TEXT NOT NULL,
                 heart_rate INTEGER NOT NULL,
                 source_batch_id TEXT NOT NULL,
                 updated_at INTEGER NOT NULL,
+                PRIMARY KEY(user_id, id),
                 FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
             );
 
@@ -165,7 +167,7 @@ def initialize_database() -> None:
             ON cloud_heart_rate_samples(user_id, sample_timestamp, heart_rate, source_batch_id);
 
             CREATE TABLE IF NOT EXISTS cloud_sleep_records (
-                id TEXT PRIMARY KEY,
+                id TEXT NOT NULL,
                 user_id INTEGER NOT NULL,
                 date TEXT NOT NULL,
                 start_at INTEGER NOT NULL,
@@ -176,6 +178,7 @@ def initialize_database() -> None:
                 source_batch_id TEXT NOT NULL,
                 updated_at INTEGER NOT NULL,
                 deleted_at INTEGER,
+                PRIMARY KEY(user_id, id),
                 FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
             );
 
@@ -183,6 +186,131 @@ def initialize_database() -> None:
             ON cloud_sleep_records(user_id, date);
             """.strip(),
         )
+        migrate_sync_tables(connection)
+
+
+def table_exists(connection: sqlite3.Connection, table_name: str) -> bool:
+    return connection.execute(
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
+        (table_name,),
+    ).fetchone() is not None
+
+
+def has_global_id_primary_key(connection: sqlite3.Connection, table_name: str) -> bool:
+    for column in connection.execute(f"PRAGMA table_info({table_name})").fetchall():
+        if column["name"] == "id":
+            return column["pk"] == 1
+    return False
+
+
+def migrate_sync_tables(connection: sqlite3.Connection) -> None:
+    if table_exists(connection, "cloud_mood_records") and has_global_id_primary_key(connection, "cloud_mood_records"):
+        rebuild_cloud_mood_records(connection)
+    if table_exists(connection, "cloud_heart_rate_samples") and has_global_id_primary_key(connection, "cloud_heart_rate_samples"):
+        rebuild_cloud_heart_rate_samples(connection)
+    if table_exists(connection, "cloud_sleep_records") and has_global_id_primary_key(connection, "cloud_sleep_records"):
+        rebuild_cloud_sleep_records(connection)
+
+
+def rebuild_cloud_mood_records(connection: sqlite3.Connection) -> None:
+    connection.executescript(
+        """
+        ALTER TABLE cloud_mood_records RENAME TO cloud_mood_records_old;
+
+        CREATE TABLE cloud_mood_records (
+            id TEXT NOT NULL,
+            user_id INTEGER NOT NULL,
+            date TEXT NOT NULL,
+            mood_type TEXT NOT NULL,
+            mood_group TEXT NOT NULL,
+            note TEXT,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL,
+            deleted_at INTEGER,
+            PRIMARY KEY(user_id, id),
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+
+        INSERT OR REPLACE INTO cloud_mood_records(
+            id, user_id, date, mood_type, mood_group, note, created_at, updated_at, deleted_at
+        )
+        SELECT id, user_id, date, mood_type, mood_group, note, created_at, updated_at, deleted_at
+        FROM cloud_mood_records_old;
+
+        DROP TABLE cloud_mood_records_old;
+
+        CREATE INDEX IF NOT EXISTS idx_cloud_mood_user_date
+        ON cloud_mood_records(user_id, date);
+        """.strip(),
+    )
+
+
+def rebuild_cloud_heart_rate_samples(connection: sqlite3.Connection) -> None:
+    connection.executescript(
+        """
+        ALTER TABLE cloud_heart_rate_samples RENAME TO cloud_heart_rate_samples_old;
+
+        CREATE TABLE cloud_heart_rate_samples (
+            id TEXT NOT NULL,
+            user_id INTEGER NOT NULL,
+            sample_timestamp INTEGER NOT NULL,
+            date TEXT NOT NULL,
+            heart_rate INTEGER NOT NULL,
+            source_batch_id TEXT NOT NULL,
+            updated_at INTEGER NOT NULL,
+            PRIMARY KEY(user_id, id),
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+
+        INSERT OR IGNORE INTO cloud_heart_rate_samples(
+            id, user_id, sample_timestamp, date, heart_rate, source_batch_id, updated_at
+        )
+        SELECT id, user_id, sample_timestamp, date, heart_rate, source_batch_id, updated_at
+        FROM cloud_heart_rate_samples_old;
+
+        DROP TABLE cloud_heart_rate_samples_old;
+
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_cloud_hr_unique
+        ON cloud_heart_rate_samples(user_id, sample_timestamp, heart_rate, source_batch_id);
+        """.strip(),
+    )
+
+
+def rebuild_cloud_sleep_records(connection: sqlite3.Connection) -> None:
+    connection.executescript(
+        """
+        ALTER TABLE cloud_sleep_records RENAME TO cloud_sleep_records_old;
+
+        CREATE TABLE cloud_sleep_records (
+            id TEXT NOT NULL,
+            user_id INTEGER NOT NULL,
+            date TEXT NOT NULL,
+            start_at INTEGER NOT NULL,
+            end_at INTEGER NOT NULL,
+            duration_minutes INTEGER NOT NULL,
+            avg_heart_rate REAL,
+            heart_rate_variability_hint REAL,
+            source_batch_id TEXT NOT NULL,
+            updated_at INTEGER NOT NULL,
+            deleted_at INTEGER,
+            PRIMARY KEY(user_id, id),
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+
+        INSERT OR REPLACE INTO cloud_sleep_records(
+            id, user_id, date, start_at, end_at, duration_minutes,
+            avg_heart_rate, heart_rate_variability_hint, source_batch_id, updated_at, deleted_at
+        )
+        SELECT id, user_id, date, start_at, end_at, duration_minutes,
+               avg_heart_rate, heart_rate_variability_hint, source_batch_id, updated_at, deleted_at
+        FROM cloud_sleep_records_old;
+
+        DROP TABLE cloud_sleep_records_old;
+
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_cloud_sleep_user_date
+        ON cloud_sleep_records(user_id, date);
+        """.strip(),
+    )
 
 
 def hash_password(password: str) -> str:
@@ -567,7 +695,7 @@ def sync_push(payload: SyncPushRequest, authorization: str | None = Header(defau
                     """
                     INSERT INTO cloud_mood_records(id, user_id, date, mood_type, mood_group, note, created_at, updated_at, deleted_at)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    ON CONFLICT(id) DO UPDATE SET
+                    ON CONFLICT(user_id, id) DO UPDATE SET
                         date = excluded.date,
                         mood_type = excluded.mood_type,
                         mood_group = excluded.mood_group,

@@ -150,6 +150,59 @@ def main():
         assert body_b["heart_rate_samples"] == []
         assert body_b["sleep_records"] == []
 
+        shared_ids = {
+            "mood_records": [
+                {
+                    "id": "shared-mood-id",
+                    "date": "2026-06-03",
+                    "mood_type": "HAPPY",
+                    "mood_group": "POSITIVE",
+                    "note": "account scoped",
+                    "created_at": 1770086400000,
+                    "updated_at": 1770086400000,
+                    "deleted_at": None,
+                }
+            ],
+            "heart_rate_samples": [
+                {
+                    "id": "shared-hr-id",
+                    "sample_timestamp": 1770086400000,
+                    "date": "2026-06-03",
+                    "heart_rate": 75,
+                    "source_batch_id": "shared",
+                    "updated_at": 1770086400000,
+                }
+            ],
+            "sleep_records": [
+                {
+                    "id": "shared-sleep-id",
+                    "date": "2026-06-03",
+                    "start_at": 1770060000000,
+                    "end_at": 1770085200000,
+                    "duration_minutes": 420,
+                    "avg_heart_rate": 62.0,
+                    "heart_rate_variability_hint": 39.0,
+                    "source_batch_id": "shared",
+                    "updated_at": 1770086400000,
+                    "deleted_at": None,
+                }
+            ],
+        }
+
+        shared_a = client.post("/api/v1/sync/push", json=shared_ids, headers=auth_headers(token_a))
+        assert shared_a.status_code == 200, shared_a.text
+        shared_b = client.post("/api/v1/sync/push", json=shared_ids, headers=auth_headers(token_b))
+        assert shared_b.status_code == 200, shared_b.text
+
+        scoped_a = client.get("/api/v1/sync/bootstrap", headers=auth_headers(token_a)).json()
+        scoped_b = client.get("/api/v1/sync/bootstrap", headers=auth_headers(token_b)).json()
+        assert any(record["id"] == "shared-mood-id" for record in scoped_a["mood_records"])
+        assert any(record["id"] == "shared-mood-id" for record in scoped_b["mood_records"])
+        assert any(record["id"] == "shared-hr-id" for record in scoped_a["heart_rate_samples"])
+        assert any(record["id"] == "shared-hr-id" for record in scoped_b["heart_rate_samples"])
+        assert any(record["id"] == "shared-sleep-id" for record in scoped_a["sleep_records"])
+        assert any(record["id"] == "shared-sleep-id" for record in scoped_b["sleep_records"])
+
 
 if __name__ == "__main__":
     main()
