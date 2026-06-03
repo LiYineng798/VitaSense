@@ -7,6 +7,7 @@ import org.wit.vitasense.data.importer.DemoImportProvider
 import org.wit.vitasense.data.repository.DefaultAiAdviceRepository
 import org.wit.vitasense.data.repository.DefaultAuthRepository
 import org.wit.vitasense.data.repository.DefaultCloudSyncRepository
+import org.wit.vitasense.data.repository.DefaultFamilyRepository
 import org.wit.vitasense.data.repository.DefaultHealthRepository
 import org.wit.vitasense.data.repository.DefaultMoodRepository
 import org.wit.vitasense.data.repository.DefaultSettingsRepository
@@ -16,6 +17,7 @@ import org.wit.vitasense.domain.HealthRecomputeEngine
 import org.wit.vitasense.repository.AiAdviceRepository
 import org.wit.vitasense.repository.AuthRepository
 import org.wit.vitasense.repository.CloudSyncRepository
+import org.wit.vitasense.repository.FamilyRepository
 import org.wit.vitasense.repository.HealthRepository
 import org.wit.vitasense.repository.MoodRepository
 import org.wit.vitasense.repository.SettingsRepository
@@ -92,6 +94,13 @@ class AppContainer(
 
     val aiAdviceRepository: AiAdviceRepository by lazy {
         DefaultAiAdviceRepository(proxyBaseUrl = DEFAULT_AI_PROXY_BASE_URL)
+    }
+
+    val familyRepository: FamilyRepository by lazy {
+        DefaultFamilyRepository(
+            baseUrlProvider = { settingsRepository.getAuthBaseUrl().ifBlank { DEFAULT_AUTH_BASE_URL } },
+            tokenProvider = { settingsRepository.getAuthToken() },
+        )
     }
 
     val healthRepository: HealthRepository by lazy {
