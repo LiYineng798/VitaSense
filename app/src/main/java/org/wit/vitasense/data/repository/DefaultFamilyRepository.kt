@@ -44,6 +44,10 @@ class DefaultFamilyRepository(
 
     override fun observeCachedFamily(): Flow<Family?> = cachedFamily.asStateFlow()
 
+    override fun clearCache() {
+        cachedFamily.value = null
+    }
+
     override suspend fun refreshFamily(): FamilyResult =
         execute(method = "GET", path = "/api/v1/families/me")
 

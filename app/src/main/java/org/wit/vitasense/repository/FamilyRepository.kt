@@ -9,6 +9,8 @@ import org.wit.vitasense.model.FamilySupportType
 interface FamilyRepository {
     fun observeCachedFamily(): Flow<Family?>
 
+    fun clearCache()
+
     suspend fun refreshFamily(): FamilyResult
 
     suspend fun createFamily(name: String): FamilyResult

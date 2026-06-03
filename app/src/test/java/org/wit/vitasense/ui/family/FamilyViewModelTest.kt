@@ -100,6 +100,98 @@ class FamilyViewModelTest {
         }
 
     @Test
+    fun signed_out_state_clears_cached_family_when_auth_emits_null() =
+        runBlocking {
+            val scope = CoroutineScope(Job() + Dispatchers.Unconfined)
+            val authRepository =
+                FakeAuthRepository(AuthUser(1, "Ava Stone", "ava@example.com", "ava", "2000-01-02"))
+            val familyRepository = FakeFamilyRepository()
+            familyRepository.seedFamily(familyNamed("Ava Family", currentUserId = 1))
+            val viewModel =
+                FamilyViewModel(
+                    authRepository = authRepository,
+                    familyRepository = familyRepository,
+                    scope = scope,
+                )
+            val collector = collectState(viewModel, scope)
+
+            yield()
+            authRepository.setCurrentUser(null)
+            yield()
+
+            assertEquals(1, familyRepository.clearCacheCalls)
+            assertEquals(null, familyRepository.cachedFamilyValue)
+            assertEquals(FamilyScreenMode.SIGNED_OUT, viewModel.state.value.mode)
+
+            collector.cancel()
+            scope.coroutineContext[Job]?.cancel()
+            Unit
+        }
+
+    @Test
+    fun user_change_clears_cached_family_before_failed_refresh_renders_old_family() =
+        runBlocking {
+            val scope = CoroutineScope(Job() + Dispatchers.Unconfined)
+            val authRepository =
+                FakeAuthRepository(AuthUser(1, "Ava Stone", "ava@example.com", "ava", "2000-01-02"))
+            val familyRepository =
+                FakeFamilyRepository(
+                    refreshResult = FamilyResult.Error("network", "Family service is unavailable right now."),
+                )
+            familyRepository.seedFamily(familyNamed("Ava Family", currentUserId = 1))
+            val viewModel =
+                FamilyViewModel(
+                    authRepository = authRepository,
+                    familyRepository = familyRepository,
+                    scope = scope,
+                )
+            val collector = collectState(viewModel, scope)
+
+            yield()
+            familyRepository.clearEvents()
+            authRepository.setCurrentUser(AuthUser(2, "Ben Stone", "ben@example.com", "ben", "2001-03-04"))
+            yield()
+
+            assertEquals(1, familyRepository.clearCacheCalls)
+            assertEquals(2, familyRepository.refreshCalls)
+            assertEquals(listOf("clearCache", "refreshFamily"), familyRepository.events)
+            assertEquals(FamilyScreenMode.NO_FAMILY, viewModel.state.value.mode)
+            assertEquals("", viewModel.state.value.familyName)
+            assertEquals(null, familyRepository.cachedFamilyValue)
+
+            collector.cancel()
+            scope.coroutineContext[Job]?.cancel()
+            Unit
+        }
+
+    @Test
+    fun signed_in_user_does_not_render_cached_family_that_does_not_include_them() =
+        runBlocking {
+            val scope = CoroutineScope(Job() + Dispatchers.Unconfined)
+            val familyRepository =
+                FakeFamilyRepository(
+                    refreshResult = FamilyResult.Error("network", "Family service is unavailable right now."),
+                )
+            familyRepository.seedFamily(familyNamed("Ava Family", currentUserId = 1))
+            val viewModel =
+                FamilyViewModel(
+                    authRepository = FakeAuthRepository(AuthUser(2, "Ben Stone", "ben@example.com", "ben", "2001-03-04")),
+                    familyRepository = familyRepository,
+                    scope = scope,
+                )
+            val collector = collectState(viewModel, scope)
+
+            yield()
+
+            assertEquals(FamilyScreenMode.NO_FAMILY, viewModel.state.value.mode)
+            assertEquals("", viewModel.state.value.familyName)
+
+            collector.cancel()
+            scope.coroutineContext[Job]?.cancel()
+            Unit
+        }
+
+    @Test
     fun blank_create_family_sets_validation_error() =
         runBlocking {
             val scope = CoroutineScope(Job() + Dispatchers.Unconfined)
@@ -234,6 +326,7 @@ private class FakeAuthRepository(
 }
 
 private class FakeFamilyRepository(
+    private val refreshResult: FamilyResult? = null,
     private val createResult: FamilyResult? = null,
     private val createException: Exception? = null,
     private val createDelayMillis: Long = 0,
@@ -243,14 +336,27 @@ private class FakeFamilyRepository(
         private set
     var createCalls = 0
         private set
+    var clearCacheCalls = 0
+        private set
     var createdName = ""
         private set
+    val events = mutableListOf<String>()
+    val cachedFamilyValue: Family?
+        get() = cachedFamily.value
 
     override fun observeCachedFamily(): Flow<Family?> = cachedFamily
 
     override suspend fun refreshFamily(): FamilyResult {
         refreshCalls++
+        events += "refreshFamily"
+        refreshResult?.let { return it }
         return FamilyResult.Success(cachedFamily.value)
+    }
+
+    override fun clearCache() {
+        clearCacheCalls++
+        events += "clearCache"
+        cachedFamily.value = null
     }
 
     override suspend fun createFamily(name: String): FamilyResult {
@@ -286,6 +392,14 @@ private class FakeFamilyRepository(
         return FamilyResult.Success(family)
     }
 
+    fun seedFamily(family: Family) {
+        cachedFamily.value = family
+    }
+
+    fun clearEvents() {
+        events.clear()
+    }
+
     override suspend fun joinFamily(inviteCode: String): FamilyResult = error("unused")
 
     override suspend fun renameFamily(
@@ -313,3 +427,30 @@ private class FakeFamilyRepository(
         type: FamilySupportType,
     ): FamilyResult = error("unused")
 }
+
+private fun familyNamed(
+    name: String,
+    currentUserId: Long,
+): Family =
+    Family(
+        id = 20,
+        name = name,
+        inviteCode = "JOIN20",
+        currentUserRole = FamilyRole.OWNER,
+        members =
+            listOf(
+                FamilyMember(
+                    userId = currentUserId,
+                    fullName = "Ava Stone",
+                    username = "ava",
+                    role = FamilyRole.OWNER,
+                    moodType = null,
+                    moodNote = null,
+                    statusLabel = "No check-in yet",
+                    statusUpdatedAt = null,
+                    supportCountToday = 0,
+                    latestSupportType = null,
+                    latestSupportSentAt = null,
+                ),
+            ),
+    )

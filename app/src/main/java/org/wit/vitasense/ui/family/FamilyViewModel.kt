@@ -32,6 +32,7 @@ class FamilyViewModel(
     private val loading = MutableStateFlow(false)
     private val errorMessage = MutableStateFlow<String?>(null)
     private var runningAction: Job? = null
+    private var observedUserId: Long? = null
 
     val state: StateFlow<FamilyScreenState> =
         combine(
@@ -40,10 +41,14 @@ class FamilyViewModel(
             loading,
             errorMessage,
         ) { currentUser: AuthUser?, family: Family?, isLoading: Boolean, error: String? ->
+            val visibleFamily =
+                family?.takeIf { candidate ->
+                    currentUser != null && candidate.members.any { member -> member.userId == currentUser.id }
+                }
             FamilyUiMapper.build(
                 currentUserId = currentUser?.id,
                 isSignedIn = currentUser != null,
-                family = family,
+                family = visibleFamily,
                 isLoading = isLoading,
                 errorMessage = error,
             )
@@ -62,6 +67,10 @@ class FamilyViewModel(
                     errorMessage.value = null
                     runningAction?.cancelAndJoin()
                     loading.value = false
+                    if ((observedUserId != userId && observedUserId != null) || userId == null) {
+                        familyRepository.clearCache()
+                    }
+                    observedUserId = userId
                     if (userId != null) {
                         refresh()
                     }
