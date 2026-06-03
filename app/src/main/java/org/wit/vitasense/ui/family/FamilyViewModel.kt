@@ -35,6 +35,7 @@ class FamilyViewModel(
     private val errorMessage = MutableStateFlow<String?>(null)
     private var runningAction: Job? = null
     private var observedUserId: Long? = null
+    private var pendingStatusSyncDate: String? = null
 
     val state: StateFlow<FamilyScreenState> =
         combine(
@@ -164,6 +165,15 @@ class FamilyViewModel(
 
     fun syncTodayStatus(date: String) {
         val familyId = state.value.familyId ?: return
+        if (runningAction?.isActive == true) {
+            pendingStatusSyncDate = date
+            runningAction?.invokeOnCompletion {
+                modelScope.launch {
+                    consumePendingStatusSync()
+                }
+            }
+            return
+        }
         runFamilyAction {
             val mood = moodRepository.getLatestMoodForDate(date)
             familyRepository.upsertStatus(
@@ -177,6 +187,12 @@ class FamilyViewModel(
                     ),
             )
         }
+    }
+
+    private fun consumePendingStatusSync() {
+        val date = pendingStatusSyncDate ?: return
+        pendingStatusSyncDate = null
+        syncTodayStatus(date)
     }
 
     private fun runFamilyAction(action: suspend () -> FamilyResult) {

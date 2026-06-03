@@ -1,6 +1,7 @@
 package org.wit.vitasense.ui.family
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -343,6 +344,49 @@ class FamilyViewModelTest {
             Unit
         }
 
+    @Test
+    fun sync_today_status_runs_after_initial_refresh_finishes() =
+        runBlocking {
+            val scope = CoroutineScope(Job() + Dispatchers.Unconfined)
+            val refreshGate = CompletableDeferred<Unit>()
+            val familyRepository = FakeFamilyRepository(refreshGate = refreshGate)
+            familyRepository.seedFamily(familyNamed("Ava Family", currentUserId = 1))
+            val moodRepository =
+                FakeMoodRepository(
+                    latestMood =
+                        MoodRecordEntity(
+                            date = "2026-06-03",
+                            moodType = "HAPPY",
+                            moodGroup = "positive",
+                            note = "better",
+                            createdAt = 1770000000000,
+                        ),
+                )
+            val viewModel =
+                FamilyViewModel(
+                    authRepository = FakeAuthRepository(AuthUser(1, "Ava Stone", "ava@example.com", "ava", "2000-01-02")),
+                    familyRepository = familyRepository,
+                    moodRepository = moodRepository,
+                    scope = scope,
+                )
+            val collector = collectState(viewModel, scope)
+
+            yield()
+            viewModel.syncTodayStatus("2026-06-03")
+            yield()
+            assertEquals(null, familyRepository.lastStatusSnapshot)
+
+            refreshGate.complete(Unit)
+            yield()
+
+            assertEquals("HAPPY", familyRepository.lastStatusSnapshot?.moodType)
+            assertEquals("better", familyRepository.lastStatusSnapshot?.moodNote)
+
+            collector.cancel()
+            scope.coroutineContext[Job]?.cancel()
+            Unit
+        }
+
     private fun collectState(
         viewModel: FamilyViewModel,
         scope: CoroutineScope,
@@ -385,6 +429,7 @@ private class FakeFamilyRepository(
     private val createResult: FamilyResult? = null,
     private val createException: Exception? = null,
     private val createDelayMillis: Long = 0,
+    private val refreshGate: CompletableDeferred<Unit>? = null,
 ) : FamilyRepository {
     private val cachedFamily = MutableStateFlow<Family?>(null)
     var refreshCalls = 0
@@ -408,6 +453,7 @@ private class FakeFamilyRepository(
     override suspend fun refreshFamily(): FamilyResult {
         refreshCalls++
         events += "refreshFamily"
+        refreshGate?.await()
         refreshResult?.let { return it }
         return FamilyResult.Success(cachedFamily.value)
     }
