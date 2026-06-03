@@ -83,6 +83,9 @@ class AppContainer(
             moodRecordDao = database.moodRecordDao(),
             heartRateDao = database.heartRateRawSampleDao(),
             sleepRecordDao = database.sleepRecordDao(),
+            dailySummaryDao = database.dailySummaryDao(),
+            riskAssessmentDao = database.riskAssessmentDao(),
+            importLogDao = database.importLogDao(),
             recomputeEngine = recomputeEngine,
         )
     }

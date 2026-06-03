@@ -52,6 +52,19 @@ class DefaultSettingsRepositoryTest {
     }
 
     @Test
+    fun applyingSyncedThemeDoesNotPushLocalSnapshot() = runBlocking {
+        val dao = FakeAppSettingDao()
+        val cloudSyncRepository = FakeSettingsCloudSyncRepository()
+        val repository = DefaultSettingsRepository(dao) { cloudSyncRepository }
+
+        repository.applySyncedTheme(ThemeMode.DARK, ThemeFamily.ROSE_INDIGO)
+
+        assertEquals(ThemeMode.DARK, repository.getThemeMode())
+        assertEquals(ThemeFamily.ROSE_INDIGO, repository.getThemeFamily())
+        assertEquals(emptyList<SyncReason>(), cloudSyncRepository.pushReasons)
+    }
+
+    @Test
     fun restores_rose_indigo_family_from_saved_setting() = runBlocking {
         val dao = FakeAppSettingDao(mapOf("theme_family" to "rose_indigo"))
         val repository = DefaultSettingsRepository(dao)
@@ -180,6 +193,8 @@ private class FakeSettingsCloudSyncRepository : CloudSyncRepository {
     val pushReasons = mutableListOf<SyncReason>()
 
     override suspend fun bootstrapAfterLogin(): CloudSyncResult = CloudSyncResult(true, "ok")
+
+    override suspend fun bootstrapForAccountSwitch(): CloudSyncResult = CloudSyncResult(true, "ok")
 
     override suspend fun pushLocalSnapshot(reason: SyncReason): CloudSyncResult {
         pushReasons += reason

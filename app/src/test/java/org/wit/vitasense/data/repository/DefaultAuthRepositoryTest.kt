@@ -116,8 +116,54 @@ class DefaultAuthRepositoryTest {
         val result = repository.login("ava", "password123")
 
         assertTrue(result is AuthResult.Success)
-        assertEquals(1, cloudSyncRepository.bootstrapCalls)
+        assertEquals(1, cloudSyncRepository.accountSwitchBootstrapCalls)
         assertEquals("remote-token", settingsRepository.authToken.value)
+    }
+
+    @Test
+    fun interactiveLoginBootstrapsForAccountSwitch() = runBlocking {
+        val settingsRepository = FakeSettingsRepository()
+        settingsRepository.authBaseUrl.value = "https://server.np5.top"
+        val cloudSyncRepository = FakeCloudSyncRepository()
+        val repository =
+            DefaultAuthRepository(
+                settingsRepository = settingsRepository,
+                cloudSyncRepository = cloudSyncRepository,
+                connectionFactory =
+                    FakeAuthConnectionFactory(
+                        mapOf(
+                            "POST https://server.np5.top/api/v1/auth/login" to
+                                ArrayDeque(
+                                    listOf(
+                                        FakeHttpResponse(
+                                            200,
+                                            """
+                                            {
+                                              "success": true,
+                                              "message": "Login successful.",
+                                              "token": "remote-token",
+                                              "user": {
+                                                "id": 8,
+                                                "full_name": "Ben Stone",
+                                                "email": "ben@example.com",
+                                                "username": "ben",
+                                                "birth_date": "2000-01-02"
+                                              }
+                                            }
+                                            """.trimIndent(),
+                                        ),
+                                    ),
+                                ),
+                        ),
+                    ),
+                scope = CoroutineScope(Job() + Dispatchers.Unconfined),
+            )
+
+        val result = repository.login("ben", "password123")
+
+        assertTrue(result is AuthResult.Success)
+        assertEquals(0, cloudSyncRepository.bootstrapCalls)
+        assertEquals(1, cloudSyncRepository.accountSwitchBootstrapCalls)
     }
 
     @Test
@@ -209,9 +255,11 @@ class DefaultAuthRepositoryTest {
         val settingsRepository = FakeSettingsRepository()
         settingsRepository.authBaseUrl.value = "https://server.np5.top"
         settingsRepository.authToken.value = "saved-token"
+        val cloudSyncRepository = FakeCloudSyncRepository()
         val repository =
             DefaultAuthRepository(
                 settingsRepository = settingsRepository,
+                cloudSyncRepository = cloudSyncRepository,
                 connectionFactory =
                     FakeAuthConnectionFactory(
                         mapOf(
@@ -245,6 +293,7 @@ class DefaultAuthRepositoryTest {
 
         assertEquals("ava@example.com", repository.getCurrentUser()?.email)
         assertTrue(settingsRepository.currentUserJson.value.contains("ava@example.com"))
+        assertEquals(0, cloudSyncRepository.accountSwitchBootstrapCalls)
     }
 
     @Test
@@ -310,9 +359,15 @@ private class FakeCloudSyncRepository(
     private val bootstrapResult: CloudSyncResult = CloudSyncResult(true, "ok"),
 ) : CloudSyncRepository {
     var bootstrapCalls = 0
+    var accountSwitchBootstrapCalls = 0
 
     override suspend fun bootstrapAfterLogin(): CloudSyncResult {
         bootstrapCalls++
+        return bootstrapResult
+    }
+
+    override suspend fun bootstrapForAccountSwitch(): CloudSyncResult {
+        accountSwitchBootstrapCalls++
         return bootstrapResult
     }
 
@@ -415,6 +470,14 @@ private class FakeSettingsRepository : SettingsRepository {
     }
 
     override suspend fun setThemeFamily(family: ThemeFamily) {
+        themeFamily.value = family
+    }
+
+    override suspend fun applySyncedTheme(
+        mode: ThemeMode,
+        family: ThemeFamily,
+    ) {
+        themeMode.value = mode
         themeFamily.value = family
     }
 

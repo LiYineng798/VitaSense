@@ -98,6 +98,8 @@ private class FakeCloudSyncRepository(
 
     override suspend fun bootstrapAfterLogin(): CloudSyncResult = result
 
+    override suspend fun bootstrapForAccountSwitch(): CloudSyncResult = result
+
     override suspend fun pushLocalSnapshot(reason: SyncReason): CloudSyncResult = result
 
     override suspend fun syncNow(): CloudSyncResult {
@@ -173,6 +175,14 @@ private class FakeSettingsRepository : SettingsRepository {
     }
 
     override suspend fun setThemeFamily(family: ThemeFamily) {
+        themeFamily.value = family
+    }
+
+    override suspend fun applySyncedTheme(
+        mode: ThemeMode,
+        family: ThemeFamily,
+    ) {
+        themeMode.value = mode
         themeFamily.value = family
     }
 

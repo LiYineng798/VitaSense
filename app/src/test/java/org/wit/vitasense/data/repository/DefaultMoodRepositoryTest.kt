@@ -78,6 +78,8 @@ private class FakeMoodCloudSyncRepository : CloudSyncRepository {
 
     override suspend fun bootstrapAfterLogin(): CloudSyncResult = CloudSyncResult(true, "ok")
 
+    override suspend fun bootstrapForAccountSwitch(): CloudSyncResult = CloudSyncResult(true, "ok")
+
     override suspend fun pushLocalSnapshot(reason: SyncReason): CloudSyncResult {
         pushReasons += reason
         return CloudSyncResult(true, "ok")

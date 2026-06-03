@@ -59,6 +59,11 @@ interface SettingsRepository {
 
     suspend fun setThemeFamily(family: ThemeFamily)
 
+    suspend fun applySyncedTheme(
+        mode: ThemeMode,
+        family: ThemeFamily,
+    )
+
     suspend fun setAuthBaseUrl(baseUrl: String)
 
     suspend fun setAuthToken(token: String?)

@@ -8,8 +8,11 @@ import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import org.wit.vitasense.db.AppDatabase
+import org.wit.vitasense.db.dao.DailySummaryDao
 import org.wit.vitasense.db.dao.HeartRateRawSampleDao
+import org.wit.vitasense.db.dao.ImportLogDao
 import org.wit.vitasense.db.dao.MoodRecordDao
+import org.wit.vitasense.db.dao.RiskAssessmentDao
 import org.wit.vitasense.db.dao.SleepRecordDao
 import org.wit.vitasense.db.entity.HeartRateRawSampleEntity
 import org.wit.vitasense.db.entity.MoodRecordEntity
@@ -40,6 +43,9 @@ class DefaultCloudSyncRepository(
     private val moodRecordDao: MoodRecordDao? = null,
     private val heartRateDao: HeartRateRawSampleDao? = null,
     private val sleepRecordDao: SleepRecordDao? = null,
+    private val dailySummaryDao: DailySummaryDao? = null,
+    private val riskAssessmentDao: RiskAssessmentDao? = null,
+    private val importLogDao: ImportLogDao? = null,
     private val recomputeEngine: HealthRecomputeEngine? = null,
     private val request: (suspend (method: String, path: String, token: String, body: String?) -> NetworkResponse)? = null,
     private val clock: () -> Long = { System.currentTimeMillis() },
@@ -47,15 +53,26 @@ class DefaultCloudSyncRepository(
     private val snapshotMerger: (suspend (CloudSyncSnapshot) -> Unit)? = null,
 ) : CloudSyncRepository {
     override suspend fun bootstrapAfterLogin(): CloudSyncResult {
+        return bootstrap(resetLocalDataFirst = false)
+    }
+
+    override suspend fun bootstrapForAccountSwitch(): CloudSyncResult {
+        return bootstrap(resetLocalDataFirst = true)
+    }
+
+    private suspend fun bootstrap(resetLocalDataFirst: Boolean): CloudSyncResult {
         val token = settingsRepository.getAuthToken()
         if (token.isBlank()) return fail("missing_token")
         return runCatching {
             settingsRepository.setSyncStatus("syncing")
+            if (resetLocalDataFirst) {
+                clearSyncedLocalData()
+            }
             val response = executeRequest("GET", "/api/v1/sync/bootstrap", token, null)
             if (response.statusCode == 401) return fail("unauthorized")
             if (response.statusCode !in 200..299) return fail("server")
             val snapshot = parseBootstrapResponse(response.body)
-            mergeSnapshot(snapshot)
+            mergeSnapshot(snapshot, forceSettings = resetLocalDataFirst)
             recomputeEngine?.recomputeAllDates()
             settingsRepository.setSyncStatus("synced", syncedAt = clock())
             CloudSyncResult(true, "Cloud sync complete.", snapshot.serverTime)
@@ -137,20 +154,34 @@ class DefaultCloudSyncRepository(
         return payload
     }
 
-    private suspend fun mergeSnapshot(snapshot: CloudSyncSnapshot) {
+    private suspend fun mergeSnapshot(
+        snapshot: CloudSyncSnapshot,
+        forceSettings: Boolean = false,
+    ) {
         snapshotMerger?.let {
             it(snapshot)
             return
         }
         snapshot.settings?.let { settings ->
-            if (settings.updatedAt >= (settingsRepository.getLastSyncAt() ?: 0L)) {
-                settingsRepository.setThemeMode(ThemeMode.valueOf(settings.themeMode.uppercase()))
-                settingsRepository.setThemeFamily(ThemeFamily.valueOf(settings.themeFamily.uppercase()))
+            if (forceSettings || settings.updatedAt >= (settingsRepository.getLastSyncAt() ?: 0L)) {
+                settingsRepository.applySyncedTheme(
+                    mode = ThemeMode.valueOf(settings.themeMode.uppercase()),
+                    family = ThemeFamily.valueOf(settings.themeFamily.uppercase()),
+                )
             }
         }
         snapshot.moodRecords.forEach { mergeMood(it) }
         snapshot.heartRateSamples.forEach { mergeHeartRate(it) }
         snapshot.sleepRecords.forEach { mergeSleep(it) }
+    }
+
+    private suspend fun clearSyncedLocalData() {
+        requireNotNull(moodRecordDao) { "Mood DAO is required for account-switch sync." }.clear()
+        requireNotNull(heartRateDao) { "Heart-rate DAO is required for account-switch sync." }.clear()
+        requireNotNull(sleepRecordDao) { "Sleep DAO is required for account-switch sync." }.clear()
+        dailySummaryDao?.clear()
+        riskAssessmentDao?.clear()
+        importLogDao?.clear()
     }
 
     private suspend fun mergeMood(record: CloudSyncMoodRecord) {

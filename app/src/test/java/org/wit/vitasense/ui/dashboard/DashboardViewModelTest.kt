@@ -245,6 +245,11 @@ class DashboardViewModelTest {
 
         override suspend fun setThemeFamily(family: ThemeFamily) = Unit
 
+        override suspend fun applySyncedTheme(
+            mode: ThemeMode,
+            family: ThemeFamily,
+        ) = Unit
+
         override suspend fun setAuthBaseUrl(baseUrl: String) = Unit
 
         override suspend fun setAuthToken(token: String?) = Unit

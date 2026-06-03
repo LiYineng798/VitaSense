@@ -93,7 +93,7 @@ class DefaultAuthRepository(
         }
 
         when (val restored = fetchCurrentUser(token)) {
-            is AuthResult.Success -> persistSession(token, restored.user)
+            is AuthResult.Success -> persistSession(token, restored.user, resetLocalData = false)
             is AuthResult.Error -> clearSession()
         }
     }
@@ -128,7 +128,7 @@ class DefaultAuthRepository(
 
         return when {
             response.code in 200..299 && envelope.token != null && envelope.user != null -> {
-                persistSession(envelope.token, envelope.user)
+                persistSession(envelope.token, envelope.user, resetLocalData = true)
                 AuthResult.Success(envelope.user)
             }
 
@@ -178,12 +178,19 @@ class DefaultAuthRepository(
     private suspend fun persistSession(
         token: String,
         user: AuthUser,
+        resetLocalData: Boolean,
     ) {
         settingsRepository.setAuthToken(token)
         settingsRepository.setCurrentUserJson(user.toStorageJson())
         settingsRepository.setCurrentUserId(user.id)
         currentUser.value = user
-        runCatching { cloudSyncRepository?.bootstrapAfterLogin() }
+        runCatching {
+            if (resetLocalData) {
+                cloudSyncRepository?.bootstrapForAccountSwitch()
+            } else {
+                cloudSyncRepository?.bootstrapAfterLogin()
+            }
+        }
     }
 
     private suspend fun clearSession() {

@@ -184,6 +184,14 @@ private class FakeProfileSettingsRepository : SettingsRepository {
         themeFamily.value = family
     }
 
+    override suspend fun applySyncedTheme(
+        mode: ThemeMode,
+        family: ThemeFamily,
+    ) {
+        themeMode.value = mode
+        themeFamily.value = family
+    }
+
     override suspend fun setAuthBaseUrl(baseUrl: String) {
         authBaseUrl.value = baseUrl
     }

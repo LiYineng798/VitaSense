@@ -144,23 +144,39 @@ class DefaultSettingsRepository(
         appSettingDao.get(KEY_SYNC_ERROR)?.value.orEmpty()
 
     override suspend fun setThemeMode(mode: ThemeMode) {
+        writeThemeMode(mode)
+        pushThemeChanged()
+    }
+
+    override suspend fun setThemeFamily(family: ThemeFamily) {
+        writeThemeFamily(family)
+        pushThemeChanged()
+    }
+
+    override suspend fun applySyncedTheme(
+        mode: ThemeMode,
+        family: ThemeFamily,
+    ) {
+        writeThemeMode(mode)
+        writeThemeFamily(family)
+    }
+
+    private suspend fun writeThemeMode(mode: ThemeMode) {
         appSettingDao.upsert(
             AppSettingEntity(
                 key = THEME_KEY,
                 value = mode.name.lowercase(),
             ),
         )
-        pushThemeChanged()
     }
 
-    override suspend fun setThemeFamily(family: ThemeFamily) {
+    private suspend fun writeThemeFamily(family: ThemeFamily) {
         appSettingDao.upsert(
             AppSettingEntity(
                 key = THEME_FAMILY_KEY,
                 value = family.name.lowercase(),
             ),
         )
-        pushThemeChanged()
     }
 
     private suspend fun pushThemeChanged() {
