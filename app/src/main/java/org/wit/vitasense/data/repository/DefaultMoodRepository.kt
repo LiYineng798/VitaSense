@@ -5,10 +5,13 @@ import org.wit.vitasense.db.dao.MoodRecordDao
 import org.wit.vitasense.db.entity.MoodRecordEntity
 import org.wit.vitasense.model.MoodFilter
 import org.wit.vitasense.model.MoodType
+import org.wit.vitasense.model.SyncReason
+import org.wit.vitasense.repository.CloudSyncRepository
 import org.wit.vitasense.repository.MoodRepository
 
 class DefaultMoodRepository(
     private val moodRecordDao: MoodRecordDao,
+    private val cloudSyncRepositoryProvider: (() -> CloudSyncRepository?)? = null,
 ) : MoodRepository {
     override fun observeMoodRecords(filter: MoodFilter): Flow<List<MoodRecordEntity>> =
         moodRecordDao.observeFiltered(
@@ -30,9 +33,17 @@ class DefaultMoodRepository(
                 note = note?.takeIf { it.isNotBlank() },
             ),
         )
+        pushMoodChanged()
     }
 
     override suspend fun deleteMood(id: Long) {
-        moodRecordDao.deleteById(id)
+        moodRecordDao.markDeleted(id, System.currentTimeMillis())
+        pushMoodChanged()
+    }
+
+    private suspend fun pushMoodChanged() {
+        runCatching {
+            cloudSyncRepositoryProvider?.invoke()?.pushLocalSnapshot(SyncReason.MOOD_CHANGED)
+        }
     }
 }

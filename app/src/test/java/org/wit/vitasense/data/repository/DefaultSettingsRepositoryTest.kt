@@ -9,10 +9,13 @@ import org.junit.Test
 import org.wit.vitasense.model.AiAdvice
 import org.wit.vitasense.model.AiProvider
 import org.wit.vitasense.model.AiProviderConfig
+import org.wit.vitasense.model.CloudSyncResult
+import org.wit.vitasense.model.SyncReason
 import org.wit.vitasense.db.dao.AppSettingDao
 import org.wit.vitasense.db.entity.AppSettingEntity
 import org.wit.vitasense.model.ThemeFamily
 import org.wit.vitasense.model.ThemeMode
+import org.wit.vitasense.repository.CloudSyncRepository
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DefaultSettingsRepositoryTest {
@@ -34,6 +37,18 @@ class DefaultSettingsRepositoryTest {
         repository.setThemeFamily(ThemeFamily.ROSE_INDIGO)
 
         assertEquals("rose_indigo", dao.snapshot()["theme_family"])
+    }
+
+    @Test
+    fun themeChangePushesLocalSnapshot() = runBlocking {
+        val dao = FakeAppSettingDao()
+        val cloudSyncRepository = FakeSettingsCloudSyncRepository()
+        val repository = DefaultSettingsRepository(dao) { cloudSyncRepository }
+
+        repository.setThemeFamily(ThemeFamily.ROSE_INDIGO)
+        repository.setThemeMode(ThemeMode.DARK)
+
+        assertEquals(listOf(SyncReason.THEME_CHANGED, SyncReason.THEME_CHANGED), cloudSyncRepository.pushReasons)
     }
 
     @Test
@@ -159,6 +174,19 @@ class DefaultSettingsRepositoryTest {
         assertEquals("", repository.observeSyncError().first())
         assertEquals(1_779_999_000_001L, repository.observeLastSyncAt().first())
     }
+}
+
+private class FakeSettingsCloudSyncRepository : CloudSyncRepository {
+    val pushReasons = mutableListOf<SyncReason>()
+
+    override suspend fun bootstrapAfterLogin(): CloudSyncResult = CloudSyncResult(true, "ok")
+
+    override suspend fun pushLocalSnapshot(reason: SyncReason): CloudSyncResult {
+        pushReasons += reason
+        return CloudSyncResult(true, "ok")
+    }
+
+    override suspend fun syncNow(): CloudSyncResult = CloudSyncResult(true, "ok")
 }
 
 private class FakeAppSettingDao(

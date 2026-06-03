@@ -21,6 +21,8 @@ import org.wit.vitasense.domain.HealthRecomputeEngine
 import org.wit.vitasense.model.DemoBundleInfo
 import org.wit.vitasense.model.ImportOperationResult
 import org.wit.vitasense.model.ImportStatus
+import org.wit.vitasense.model.SyncReason
+import org.wit.vitasense.repository.CloudSyncRepository
 import org.wit.vitasense.repository.HealthRepository
 import org.wit.vitasense.util.DateUtils
 
@@ -34,6 +36,7 @@ class DefaultHealthRepository(
     private val importLogDao: ImportLogDao,
     private val demoImportProvider: DemoImportProvider,
     private val recomputeEngine: HealthRecomputeEngine,
+    private val cloudSyncRepositoryProvider: (() -> CloudSyncRepository?)? = null,
 ) : HealthRepository {
     override fun observeLatestHeartRate() = heartRateDao.observeLatest()
 
@@ -178,6 +181,10 @@ class DefaultHealthRepository(
                     checksum = DateUtils.checksum(raw),
                 ),
             )
+
+            runCatching {
+                cloudSyncRepositoryProvider?.invoke()?.pushLocalSnapshot(SyncReason.DEMO_IMPORT)
+            }
 
             result
         }

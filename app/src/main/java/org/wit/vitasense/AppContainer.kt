@@ -6,6 +6,7 @@ import kotlinx.coroutines.runBlocking
 import org.wit.vitasense.data.importer.DemoImportProvider
 import org.wit.vitasense.data.repository.DefaultAiAdviceRepository
 import org.wit.vitasense.data.repository.DefaultAuthRepository
+import org.wit.vitasense.data.repository.DefaultCloudSyncRepository
 import org.wit.vitasense.data.repository.DefaultHealthRepository
 import org.wit.vitasense.data.repository.DefaultMoodRepository
 import org.wit.vitasense.data.repository.DefaultSettingsRepository
@@ -14,6 +15,7 @@ import org.wit.vitasense.domain.DerivedContentSync
 import org.wit.vitasense.domain.HealthRecomputeEngine
 import org.wit.vitasense.repository.AiAdviceRepository
 import org.wit.vitasense.repository.AuthRepository
+import org.wit.vitasense.repository.CloudSyncRepository
 import org.wit.vitasense.repository.HealthRepository
 import org.wit.vitasense.repository.MoodRepository
 import org.wit.vitasense.repository.SettingsRepository
@@ -53,7 +55,10 @@ class AppContainer(
     }
 
     val settingsRepository: SettingsRepository by lazy {
-        DefaultSettingsRepository(database.appSettingDao())
+        DefaultSettingsRepository(
+            appSettingDao = database.appSettingDao(),
+            cloudSyncRepositoryProvider = { cloudSyncRepository },
+        )
             .also { repository ->
                 runBlocking {
                     if (repository.getAuthBaseUrl().isBlank()) {
@@ -66,6 +71,19 @@ class AppContainer(
     val authRepository: AuthRepository by lazy {
         DefaultAuthRepository(
             settingsRepository = settingsRepository,
+            cloudSyncRepository = cloudSyncRepository,
+        )
+    }
+
+    val cloudSyncRepository: CloudSyncRepository by lazy {
+        DefaultCloudSyncRepository(
+            baseUrl = DEFAULT_AUTH_BASE_URL,
+            settingsRepository = settingsRepository,
+            database = database,
+            moodRecordDao = database.moodRecordDao(),
+            heartRateDao = database.heartRateRawSampleDao(),
+            sleepRecordDao = database.sleepRecordDao(),
+            recomputeEngine = recomputeEngine,
         )
     }
 
@@ -84,10 +102,14 @@ class AppContainer(
             importLogDao = database.importLogDao(),
             demoImportProvider = demoImportProvider,
             recomputeEngine = recomputeEngine,
+            cloudSyncRepositoryProvider = { cloudSyncRepository },
         )
     }
 
     val moodRepository: MoodRepository by lazy {
-        DefaultMoodRepository(database.moodRecordDao())
+        DefaultMoodRepository(
+            moodRecordDao = database.moodRecordDao(),
+            cloudSyncRepositoryProvider = { cloudSyncRepository },
+        )
     }
 }

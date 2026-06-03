@@ -17,6 +17,7 @@ import org.wit.vitasense.model.parseRemoteAuthEnvelope
 import org.wit.vitasense.model.parseStoredAuthUser
 import org.wit.vitasense.model.toStorageJson
 import org.wit.vitasense.repository.AuthRepository
+import org.wit.vitasense.repository.CloudSyncRepository
 import org.wit.vitasense.repository.SettingsRepository
 
 interface AuthConnectionFactory {
@@ -30,6 +31,7 @@ object DefaultAuthConnectionFactory : AuthConnectionFactory {
 
 class DefaultAuthRepository(
     private val settingsRepository: SettingsRepository,
+    private val cloudSyncRepository: CloudSyncRepository? = null,
     private val connectionFactory: AuthConnectionFactory = DefaultAuthConnectionFactory,
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
 ) : AuthRepository {
@@ -181,6 +183,7 @@ class DefaultAuthRepository(
         settingsRepository.setCurrentUserJson(user.toStorageJson())
         settingsRepository.setCurrentUserId(user.id)
         currentUser.value = user
+        runCatching { cloudSyncRepository?.bootstrapAfterLogin() }
     }
 
     private suspend fun clearSession() {

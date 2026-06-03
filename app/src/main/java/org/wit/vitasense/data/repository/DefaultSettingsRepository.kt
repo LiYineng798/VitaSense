@@ -10,12 +10,15 @@ import org.wit.vitasense.model.AiProvider
 import org.wit.vitasense.model.AiProviderConfig
 import org.wit.vitasense.model.ThemeFamily
 import org.wit.vitasense.model.ThemeMode
+import org.wit.vitasense.model.SyncReason
+import org.wit.vitasense.repository.CloudSyncRepository
 import org.wit.vitasense.model.parseStoredAiAdvice
 import org.wit.vitasense.model.toStorageJson
 import org.wit.vitasense.repository.SettingsRepository
 
 class DefaultSettingsRepository(
     private val appSettingDao: AppSettingDao,
+    private val cloudSyncRepositoryProvider: (() -> CloudSyncRepository?)? = null,
 ) : SettingsRepository {
     override fun observeThemeMode(): Flow<ThemeMode> =
         appSettingDao.observe(THEME_KEY)
@@ -147,6 +150,7 @@ class DefaultSettingsRepository(
                 value = mode.name.lowercase(),
             ),
         )
+        pushThemeChanged()
     }
 
     override suspend fun setThemeFamily(family: ThemeFamily) {
@@ -156,6 +160,13 @@ class DefaultSettingsRepository(
                 value = family.name.lowercase(),
             ),
         )
+        pushThemeChanged()
+    }
+
+    private suspend fun pushThemeChanged() {
+        runCatching {
+            cloudSyncRepositoryProvider?.invoke()?.pushLocalSnapshot(SyncReason.THEME_CHANGED)
+        }
     }
 
     override suspend fun setAuthBaseUrl(baseUrl: String) {

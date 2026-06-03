@@ -20,8 +20,11 @@ import org.junit.Test
 import org.wit.vitasense.model.AiAdvice
 import org.wit.vitasense.model.AiProviderConfig
 import org.wit.vitasense.model.AuthResult
+import org.wit.vitasense.model.CloudSyncResult
+import org.wit.vitasense.model.SyncReason
 import org.wit.vitasense.model.ThemeFamily
 import org.wit.vitasense.model.ThemeMode
+import org.wit.vitasense.repository.CloudSyncRepository
 import org.wit.vitasense.repository.SettingsRepository
 
 class DefaultAuthRepositoryTest {
@@ -69,6 +72,52 @@ class DefaultAuthRepositoryTest {
         assertEquals("remote-token", settingsRepository.authToken.value)
         assertEquals(7L, settingsRepository.currentUserId.value)
         assertTrue(settingsRepository.currentUserJson.value.contains("ava@example.com"))
+    }
+
+    @Test
+    fun loginSucceedsWhenBootstrapFails() = runBlocking {
+        val settingsRepository = FakeSettingsRepository()
+        settingsRepository.authBaseUrl.value = "https://server.np5.top"
+        val cloudSyncRepository = FakeCloudSyncRepository(CloudSyncResult(false, "sync failed"))
+        val repository =
+            DefaultAuthRepository(
+                settingsRepository = settingsRepository,
+                cloudSyncRepository = cloudSyncRepository,
+                connectionFactory =
+                    FakeAuthConnectionFactory(
+                        mapOf(
+                            "POST https://server.np5.top/api/v1/auth/login" to
+                                ArrayDeque(
+                                    listOf(
+                                        FakeHttpResponse(
+                                            200,
+                                            """
+                                            {
+                                              "success": true,
+                                              "message": "Login successful.",
+                                              "token": "remote-token",
+                                              "user": {
+                                                "id": 7,
+                                                "full_name": "Ava Stone",
+                                                "email": "ava@example.com",
+                                                "username": "ava",
+                                                "birth_date": "2000-01-02"
+                                              }
+                                            }
+                                            """.trimIndent(),
+                                        ),
+                                    ),
+                                ),
+                        ),
+                    ),
+                scope = CoroutineScope(Job() + Dispatchers.Unconfined),
+            )
+
+        val result = repository.login("ava", "password123")
+
+        assertTrue(result is AuthResult.Success)
+        assertEquals(1, cloudSyncRepository.bootstrapCalls)
+        assertEquals("remote-token", settingsRepository.authToken.value)
     }
 
     @Test
@@ -255,6 +304,21 @@ private class ThrowingAuthConnectionFactory(
     private val throwable: Throwable,
 ) : AuthConnectionFactory {
     override fun open(url: URL): HttpURLConnection = throw throwable
+}
+
+private class FakeCloudSyncRepository(
+    private val bootstrapResult: CloudSyncResult = CloudSyncResult(true, "ok"),
+) : CloudSyncRepository {
+    var bootstrapCalls = 0
+
+    override suspend fun bootstrapAfterLogin(): CloudSyncResult {
+        bootstrapCalls++
+        return bootstrapResult
+    }
+
+    override suspend fun pushLocalSnapshot(reason: SyncReason): CloudSyncResult = CloudSyncResult(true, "ok")
+
+    override suspend fun syncNow(): CloudSyncResult = CloudSyncResult(true, "ok")
 }
 
 private class FakeHttpURLConnection(
