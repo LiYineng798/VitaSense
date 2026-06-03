@@ -33,6 +33,30 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class FamilyCreateRequest(BaseModel):
+    name: str
+
+
+class FamilyJoinRequest(BaseModel):
+    invite_code: str
+
+
+class FamilyRenameRequest(BaseModel):
+    name: str
+
+
+class FamilyStatusRequest(BaseModel):
+    mood_type: str | None = None
+    mood_note: str | None = None
+    status_label: str
+    updated_at: int
+
+
+class FamilySupportRequest(BaseModel):
+    receiver_user_id: int
+    support_type: str
+
+
 class HealthSummaryPayload(BaseModel):
     date: str
     total_score: int | None = None
@@ -125,6 +149,54 @@ def initialize_database() -> None:
                 created_at INTEGER NOT NULL,
                 FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
             );
+
+            CREATE TABLE IF NOT EXISTS families (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                invite_code TEXT NOT NULL UNIQUE,
+                created_by_user_id INTEGER NOT NULL,
+                created_at INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL,
+                FOREIGN KEY(created_by_user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS family_members (
+                family_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL UNIQUE,
+                role TEXT NOT NULL,
+                joined_at INTEGER NOT NULL,
+                PRIMARY KEY(family_id, user_id),
+                FOREIGN KEY(family_id) REFERENCES families(id) ON DELETE CASCADE,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS family_status_snapshots (
+                family_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL,
+                mood_type TEXT,
+                mood_note TEXT,
+                status_label TEXT NOT NULL,
+                updated_at INTEGER NOT NULL,
+                PRIMARY KEY(family_id, user_id),
+                FOREIGN KEY(family_id, user_id) REFERENCES family_members(family_id, user_id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS family_supports (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                family_id INTEGER NOT NULL,
+                sender_user_id INTEGER NOT NULL,
+                receiver_user_id INTEGER NOT NULL,
+                support_type TEXT NOT NULL,
+                support_date TEXT NOT NULL,
+                sent_at INTEGER NOT NULL,
+                UNIQUE(family_id, sender_user_id, receiver_user_id, support_type, support_date),
+                FOREIGN KEY(family_id) REFERENCES families(id) ON DELETE CASCADE,
+                FOREIGN KEY(sender_user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY(receiver_user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_family_supports_receiver_date
+            ON family_supports(family_id, receiver_user_id, support_date);
 
             CREATE TABLE IF NOT EXISTS user_settings (
                 user_id INTEGER PRIMARY KEY,
@@ -337,6 +409,49 @@ def serialize_user(row: sqlite3.Row) -> dict:
 
 def now_millis() -> int:
     return int(time.time() * 1000)
+
+
+FAMILY_SUPPORT_TYPES = {
+    "thinking_of_you",
+    "need_anything",
+    "take_a_pause",
+    "proud_of_you",
+}
+
+
+def today_key(timestamp_millis: int | None = None) -> str:
+    seconds = (timestamp_millis or now_millis()) / 1000
+    return time.strftime("%Y-%m-%d", time.gmtime(seconds))
+
+
+def generate_invite_code(connection: sqlite3.Connection) -> str:
+    alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+    for _ in range(20):
+        code = "".join(secrets.choice(alphabet) for _ in range(6))
+        existing = connection.execute("SELECT id FROM families WHERE invite_code = ?", (code,)).fetchone()
+        if existing is None:
+            return code
+    raise RuntimeError("Unable to generate unique invite code.")
+
+
+def get_family_membership(connection: sqlite3.Connection, user_id: int) -> sqlite3.Row | None:
+    return connection.execute(
+        """
+        SELECT families.id AS family_id, families.name, families.invite_code, family_members.role
+        FROM family_members
+        INNER JOIN families ON families.id = family_members.family_id
+        WHERE family_members.user_id = ?
+        LIMIT 1
+        """.strip(),
+        (user_id,),
+    ).fetchone()
+
+
+def require_family_user(authorization: str | None) -> int | JSONResponse:
+    user_id = get_user_id_from_authorization(authorization)
+    if user_id is None:
+        return invalid_response(401, "Missing or invalid session token.")
+    return user_id
 
 
 def serialize_sync_settings(row: sqlite3.Row | None) -> dict[str, Any] | None:
