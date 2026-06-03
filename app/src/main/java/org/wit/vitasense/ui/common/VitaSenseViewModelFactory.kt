@@ -6,6 +6,7 @@ import org.wit.vitasense.AppContainer
 import org.wit.vitasense.ui.assessment.AssessmentViewModel
 import org.wit.vitasense.ui.auth.AuthViewModel
 import org.wit.vitasense.ui.dashboard.DashboardViewModel
+import org.wit.vitasense.ui.family.FamilyViewModel
 import org.wit.vitasense.ui.mood.MoodViewModel
 import org.wit.vitasense.ui.profile.ProfileViewModel
 import org.wit.vitasense.ui.settings.SettingsViewModel
@@ -36,6 +37,12 @@ class VitaSenseViewModelFactory(
 
             modelClass.isAssignableFrom(AuthViewModel::class.java) ->
                 AuthViewModel(appContainer.authRepository) as T
+
+            modelClass.isAssignableFrom(FamilyViewModel::class.java) ->
+                FamilyViewModel(
+                    authRepository = appContainer.authRepository,
+                    familyRepository = appContainer.familyRepository,
+                ) as T
 
             modelClass.isAssignableFrom(ProfileViewModel::class.java) ->
                 ProfileViewModel(
