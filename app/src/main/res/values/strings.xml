@@ -124,6 +124,12 @@
     <string name="settings_ai_model">Model</string>
     <string name="settings_ai_save">Save AI Settings</string>
     <string name="settings_ai_note">AI usage may consume your provider quota. Your API key is sent to the VitaSense backend only for the current request.</string>
+    <string name="settings_cloud_sync_title">Cloud sync</string>
+    <string name="settings_cloud_sync_subtitle_idle">Sync theme and health source data after signing in.</string>
+    <string name="settings_cloud_sync_subtitle_syncing">Syncing cloud data...</string>
+    <string name="settings_cloud_sync_subtitle_synced">Last synced: %1$s</string>
+    <string name="settings_cloud_sync_button">Sync now</string>
+    <string name="settings_cloud_sync_error">Cloud sync failed: %1$s</string>
     <string name="settings_data_section">About the Data</string>
     <string name="settings_data_note">Imported samples are for course demos and local debugging only. Nothing is uploaded to the cloud. After import, Home, Trends, Mood, and Profile refresh automatically where needed.</string>
     <string name="settings_privacy_section">Privacy</string>

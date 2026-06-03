@@ -17,11 +17,14 @@ import org.wit.vitasense.db.entity.RiskAssessmentRecordEntity
 import org.wit.vitasense.model.AiAdvice
 import org.wit.vitasense.model.AiProvider
 import org.wit.vitasense.model.AiProviderConfig
+import org.wit.vitasense.model.CloudSyncResult
 import org.wit.vitasense.model.DemoBundleInfo
 import org.wit.vitasense.model.ImportOperationResult
 import org.wit.vitasense.model.ImportStatus
+import org.wit.vitasense.model.SyncReason
 import org.wit.vitasense.model.ThemeFamily
 import org.wit.vitasense.model.ThemeMode
+import org.wit.vitasense.repository.CloudSyncRepository
 import org.wit.vitasense.repository.HealthRepository
 import org.wit.vitasense.repository.SettingsRepository
 
@@ -31,7 +34,7 @@ class SettingsViewModelTest {
         runBlocking {
             val repository = FakeSettingsRepository()
             val scope = CoroutineScope(Job() + Dispatchers.Unconfined)
-            val viewModel = SettingsViewModel(FakeHealthRepository(), repository, scope)
+            val viewModel = SettingsViewModel(FakeHealthRepository(), repository, FakeCloudSyncRepository(CloudSyncResult(true, "ok")), scope)
             val collector =
                 scope.launch {
                     viewModel.themeFamily.collect {}
@@ -57,7 +60,7 @@ class SettingsViewModelTest {
         runBlocking {
             val repository = FakeSettingsRepository()
             val scope = CoroutineScope(Job() + Dispatchers.Unconfined)
-            val viewModel = SettingsViewModel(FakeHealthRepository(), repository, scope)
+            val viewModel = SettingsViewModel(FakeHealthRepository(), repository, FakeCloudSyncRepository(CloudSyncResult(true, "ok")), scope)
 
             viewModel.saveAiSettings(
                 provider = AiProvider.OPENAI_COMPATIBLE,
@@ -70,6 +73,37 @@ class SettingsViewModelTest {
             assertEquals(AiProvider.OPENAI_COMPATIBLE, repository.aiConfig.value.provider)
             assertEquals("sk-custom", repository.aiConfig.value.apiKey)
         }
+
+    @Test
+    fun syncNowUpdatesCloudSyncState() =
+        runBlocking {
+            val repository = FakeSettingsRepository()
+            val cloudSyncRepository = FakeCloudSyncRepository(CloudSyncResult(true, "Cloud sync complete."))
+            val scope = CoroutineScope(Job() + Dispatchers.Unconfined)
+            val viewModel = SettingsViewModel(FakeHealthRepository(), repository, cloudSyncRepository, scope)
+
+            viewModel.syncNow()
+            yield()
+
+            assertEquals(1, cloudSyncRepository.syncNowCalls)
+            assertEquals("synced", viewModel.cloudSyncUiState.value.status)
+            assertEquals(false, viewModel.cloudSyncUiState.value.isSyncing)
+        }
+}
+
+private class FakeCloudSyncRepository(
+    private val result: CloudSyncResult,
+) : CloudSyncRepository {
+    var syncNowCalls = 0
+
+    override suspend fun bootstrapAfterLogin(): CloudSyncResult = result
+
+    override suspend fun pushLocalSnapshot(reason: SyncReason): CloudSyncResult = result
+
+    override suspend fun syncNow(): CloudSyncResult {
+        syncNowCalls++
+        return result
+    }
 }
 
 private class FakeSettingsRepository : SettingsRepository {
@@ -204,3 +238,4 @@ private class FakeHealthRepository : HealthRepository {
 
     override suspend fun clearAllData() = Unit
 }
+

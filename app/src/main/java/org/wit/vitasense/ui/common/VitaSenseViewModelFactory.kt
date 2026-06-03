@@ -48,6 +48,7 @@ class VitaSenseViewModelFactory(
                 SettingsViewModel(
                     healthRepository = appContainer.healthRepository,
                     settingsRepository = appContainer.settingsRepository,
+                    cloudSyncRepository = appContainer.cloudSyncRepository,
                 ) as T
 
             else -> error("Unknown ViewModel class: ${modelClass.name}")

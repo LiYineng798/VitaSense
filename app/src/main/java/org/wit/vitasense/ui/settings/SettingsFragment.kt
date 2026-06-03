@@ -1,9 +1,12 @@
 package org.wit.vitasense.ui.settings
 
 import android.os.Bundle
+import java.text.DateFormat
+import java.util.Date
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -70,6 +73,9 @@ class SettingsFragment : Fragment() {
                 model = binding.aiModelInput.text?.toString().orEmpty(),
             )
         }
+        binding.syncNowButton.setOnClickListener {
+            viewModel.syncNow()
+        }
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -104,6 +110,19 @@ class SettingsFragment : Fragment() {
                     }
                 }
                 launch {
+                    viewModel.cloudSyncUiState.collect { state ->
+                        binding.cloudSyncProgress.isVisible = state.isSyncing
+                        binding.syncNowButton.isEnabled = !state.isSyncing
+                        binding.cloudSyncSubtitle.text =
+                            when {
+                                state.isSyncing -> getString(R.string.settings_cloud_sync_subtitle_syncing)
+                                state.status == "error" -> getString(R.string.settings_cloud_sync_error, state.error)
+                                state.lastSyncAt != null -> getString(R.string.settings_cloud_sync_subtitle_synced, formatSyncTime(state.lastSyncAt))
+                                else -> getString(R.string.settings_cloud_sync_subtitle_idle)
+                            }
+                    }
+                }
+                launch {
                     viewModel.events.collect { event ->
                         if (event is UiEvent.Message) {
                             Snackbar.make(binding.root, event.text, Snackbar.LENGTH_LONG).show()
@@ -113,6 +132,10 @@ class SettingsFragment : Fragment() {
             }
         }
     }
+
+    private fun formatSyncTime(timestamp: Long): String =
+        DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
+            .format(Date(timestamp))
 
     override fun onDestroyView() {
         super.onDestroyView()
