@@ -125,6 +125,7 @@ class SyncPushRequest(BaseModel):
 
 def get_connection() -> sqlite3.Connection:
     connection = sqlite3.connect(DB_PATH)
+    connection.execute("PRAGMA foreign_keys = ON")
     connection.row_factory = sqlite3.Row
     return connection
 
@@ -191,8 +192,8 @@ def initialize_database() -> None:
                 sent_at INTEGER NOT NULL,
                 UNIQUE(family_id, sender_user_id, receiver_user_id, support_type, support_date),
                 FOREIGN KEY(family_id) REFERENCES families(id) ON DELETE CASCADE,
-                FOREIGN KEY(sender_user_id) REFERENCES users(id) ON DELETE CASCADE,
-                FOREIGN KEY(receiver_user_id) REFERENCES users(id) ON DELETE CASCADE
+                FOREIGN KEY(family_id, sender_user_id) REFERENCES family_members(family_id, user_id) ON DELETE CASCADE,
+                FOREIGN KEY(family_id, receiver_user_id) REFERENCES family_members(family_id, user_id) ON DELETE CASCADE
             );
 
             CREATE INDEX IF NOT EXISTS idx_family_supports_receiver_date
@@ -420,7 +421,7 @@ FAMILY_SUPPORT_TYPES = {
 
 
 def today_key(timestamp_millis: int | None = None) -> str:
-    seconds = (timestamp_millis or now_millis()) / 1000
+    seconds = (now_millis() if timestamp_millis is None else timestamp_millis) / 1000
     return time.strftime("%Y-%m-%d", time.gmtime(seconds))
 
 
