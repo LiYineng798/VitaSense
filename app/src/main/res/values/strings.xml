@@ -168,6 +168,7 @@
     <string name="family_support_need_anything">Need anything?</string>
     <string name="family_support_take_pause">Take a pause</string>
     <string name="family_support_proud">Proud of you</string>
+    <string name="family_share_health_score">Share health score with family</string>
     <string name="profile_family_button_label">Family</string>
     <string name="dashboard_family_title">Family</string>
     <string name="dashboard_family_summary_format">%1$d updates today / %2$d support received</string>

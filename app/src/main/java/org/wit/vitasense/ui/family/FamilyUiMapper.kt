@@ -53,6 +53,18 @@ object FamilyUiMapper {
         ownerCanManage: Boolean,
     ): FamilyMemberUiModel {
         val isSelf = userId == currentUserId
+        val healthScoreText =
+            when {
+                !shareHealthScore -> "Health score not shared"
+                healthScore != null -> "Health Score $healthScore"
+                else -> "No score today"
+            }
+        val healthScoreDetailText =
+            when {
+                !shareHealthScore -> ""
+                healthScore != null -> healthScoreLabel.orEmpty()
+                else -> ""
+            }
         return FamilyMemberUiModel(
             userId = userId,
             avatarInitial = displayName().firstOrNull()?.uppercaseChar()?.toString().orEmpty(),
@@ -64,6 +76,9 @@ object FamilyUiMapper {
             supportSummary = supportCountToday.supportSummary(),
             latestSupportText = latestSupportType?.displayName.orEmpty(),
             shareHealthScore = shareHealthScore,
+            healthScoreText = healthScoreText,
+            healthScoreDetailText = healthScoreDetailText,
+            showShareHealthScoreSwitch = isSelf,
             canSendSupport = !isSelf,
             canRemove = ownerCanManage && !isSelf && role != FamilyRole.OWNER,
         )

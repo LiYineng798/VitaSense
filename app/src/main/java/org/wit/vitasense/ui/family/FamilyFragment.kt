@@ -48,6 +48,7 @@ class FamilyFragment : Fragment() {
             FamilyMemberAdapter(
                 onSupport = ::sendSupport,
                 onRemove = ::removeMember,
+                onShareHealthScoreChanged = viewModel::setShareHealthScore,
             )
         binding.memberRecyclerView.adapter = adapter
 

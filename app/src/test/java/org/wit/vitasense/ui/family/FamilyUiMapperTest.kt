@@ -82,6 +82,68 @@ class FamilyUiMapperTest {
         assertEquals("ben", state.members[1].displayName)
     }
 
+    @Test
+    fun member_card_shows_shared_health_score() {
+        val state =
+            FamilyUiMapper.build(
+                currentUserId = 1,
+                isSignedIn = true,
+                family =
+                    family(
+                        currentUserRole = FamilyRole.MEMBER,
+                        members =
+                            listOf(
+                                member(
+                                    userId = 2,
+                                    fullName = "Ben Moon",
+                                    username = "ben",
+                                    role = FamilyRole.MEMBER,
+                                    shareHealthScore = true,
+                                    healthScore = 82,
+                                    healthScoreLabel = "Stable",
+                                    healthScoreUpdatedAt = 1770000000000,
+                                ),
+                            ),
+                    ),
+                isLoading = false,
+                errorMessage = null,
+            )
+
+        assertEquals("Health Score 82", state.members.single().healthScoreText)
+        assertEquals("Stable", state.members.single().healthScoreDetailText)
+        assertEquals(false, state.members.single().showShareHealthScoreSwitch)
+    }
+
+    @Test
+    fun current_user_card_exposes_health_score_share_switch() {
+        val state =
+            FamilyUiMapper.build(
+                currentUserId = 1,
+                isSignedIn = true,
+                family =
+                    family(
+                        currentUserRole = FamilyRole.MEMBER,
+                        members =
+                            listOf(
+                                member(
+                                    userId = 1,
+                                    fullName = "Ava Stone",
+                                    username = "ava",
+                                    role = FamilyRole.MEMBER,
+                                    shareHealthScore = false,
+                                ),
+                            ),
+                    ),
+                isLoading = false,
+                errorMessage = null,
+            )
+
+        assertEquals("Health score not shared", state.members.single().healthScoreText)
+        assertEquals("", state.members.single().healthScoreDetailText)
+        assertEquals(true, state.members.single().showShareHealthScoreSwitch)
+        assertEquals(false, state.members.single().shareHealthScore)
+    }
+
     private fun family(
         currentUserRole: FamilyRole,
         members: List<FamilyMember>,
@@ -101,6 +163,10 @@ class FamilyUiMapperTest {
         moodType: String? = null,
         supportCountToday: Int = 0,
         latestSupportType: FamilySupportType? = null,
+        shareHealthScore: Boolean = false,
+        healthScore: Int? = null,
+        healthScoreLabel: String? = null,
+        healthScoreUpdatedAt: Long? = null,
     ) = FamilyMember(
         userId = userId,
         fullName = fullName,
@@ -113,5 +179,9 @@ class FamilyUiMapperTest {
         supportCountToday = supportCountToday,
         latestSupportType = latestSupportType,
         latestSupportSentAt = null,
+        shareHealthScore = shareHealthScore,
+        healthScore = healthScore,
+        healthScoreLabel = healthScoreLabel,
+        healthScoreUpdatedAt = healthScoreUpdatedAt,
     )
 }

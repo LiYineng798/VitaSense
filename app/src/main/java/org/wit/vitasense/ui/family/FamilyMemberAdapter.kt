@@ -10,6 +10,7 @@ import org.wit.vitasense.model.FamilySupportType
 class FamilyMemberAdapter(
     private val onSupport: (Long, FamilySupportType) -> Unit,
     private val onRemove: (Long) -> Unit,
+    private val onShareHealthScoreChanged: (Boolean) -> Unit,
 ) : RecyclerView.Adapter<FamilyMemberAdapter.ViewHolder>() {
     private val items = mutableListOf<FamilyMemberUiModel>()
 
@@ -57,6 +58,15 @@ class FamilyMemberAdapter(
                 } else {
                     "${item.supportSummary} · ${item.latestSupportText}"
                 }
+            binding.healthScoreText.text = item.healthScoreText
+            binding.healthScoreDetailText.text = item.healthScoreDetailText
+            binding.healthScoreDetailText.isVisible = item.healthScoreDetailText.isNotBlank()
+            binding.shareHealthScoreSwitch.isVisible = item.showShareHealthScoreSwitch
+            binding.shareHealthScoreSwitch.setOnCheckedChangeListener(null)
+            binding.shareHealthScoreSwitch.isChecked = item.shareHealthScore
+            binding.shareHealthScoreSwitch.setOnCheckedChangeListener { _, isChecked ->
+                onShareHealthScoreChanged(isChecked)
+            }
             binding.supportButtonGroup.isVisible = item.canSendSupport
             binding.supportThinkingButton.isVisible = item.canSendSupport
             binding.supportNeedAnythingButton.isVisible = item.canSendSupport

@@ -92,6 +92,35 @@
             android:textColor="?attr/vsColorPrimaryStrong" />
 
         <LinearLayout
+            android:id="@+id/healthScoreRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/healthScoreText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/healthScoreDetailText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="?android:attr/textColorSecondary" />
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/shareHealthScoreSwitch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/family_share_health_score" />
+        </LinearLayout>
+
+        <LinearLayout
             android:id="@+id/supportButtonGroup"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
