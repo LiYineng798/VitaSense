@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -22,12 +23,15 @@ import org.wit.vitasense.model.FamilySupportType
 import org.wit.vitasense.model.familyErrorMessage
 import org.wit.vitasense.repository.AuthRepository
 import org.wit.vitasense.repository.FamilyRepository
+import org.wit.vitasense.repository.HealthRepository
 import org.wit.vitasense.repository.MoodRepository
+import org.wit.vitasense.util.DateUtils
 
 class FamilyViewModel(
     private val authRepository: AuthRepository,
     private val familyRepository: FamilyRepository,
     private val moodRepository: MoodRepository,
+    private val healthRepository: HealthRepository,
     scope: CoroutineScope? = null,
 ) : ViewModel() {
     private val modelScope = scope ?: viewModelScope
@@ -176,6 +180,9 @@ class FamilyViewModel(
         }
         runFamilyAction {
             val mood = moodRepository.getLatestMoodForDate(date)
+            val shareHealthScore = currentUserShareHealthScore()
+            val latestRisk = healthRepository.observeLatestRisk().first()
+            val sharedScore = latestRisk?.totalScore?.takeIf { shareHealthScore }
             familyRepository.upsertStatus(
                 familyId = familyId,
                 snapshot =
@@ -184,9 +191,17 @@ class FamilyViewModel(
                         moodNote = mood?.note,
                         statusLabel = if (mood == null) "No check-in yet" else "Checked in today",
                         updatedAt = System.currentTimeMillis(),
+                        shareHealthScore = shareHealthScore,
+                        healthScore = sharedScore,
+                        healthScoreLabel = sharedScore?.toHealthScoreLabel(),
+                        healthScoreUpdatedAt = System.currentTimeMillis().takeIf { sharedScore != null },
                     ),
             )
         }
+    }
+
+    fun setShareHealthScore(enabled: Boolean) {
+        syncStatusWithHealthScore(enabled)
     }
 
     private fun consumePendingStatusSync() {
@@ -229,4 +244,39 @@ class FamilyViewModel(
                 is FamilyResult.Error -> result.message.ifBlank { familyErrorMessage(result.code) }
             }
     }
+
+    private fun syncStatusWithHealthScore(shareHealthScore: Boolean) {
+        val familyId = state.value.familyId ?: return
+        runFamilyAction {
+            val mood = moodRepository.getLatestMoodForDate(DateUtils.todayString())
+            val latestRisk = healthRepository.observeLatestRisk().first()
+            val sharedScore = latestRisk?.totalScore?.takeIf { shareHealthScore }
+            familyRepository.upsertStatus(
+                familyId = familyId,
+                snapshot =
+                    FamilyStatusSnapshot(
+                        moodType = mood?.moodType,
+                        moodNote = mood?.note,
+                        statusLabel = if (mood == null) "No check-in yet" else "Checked in today",
+                        updatedAt = System.currentTimeMillis(),
+                        shareHealthScore = shareHealthScore,
+                        healthScore = sharedScore,
+                        healthScoreLabel = sharedScore?.toHealthScoreLabel(),
+                        healthScoreUpdatedAt = System.currentTimeMillis().takeIf { sharedScore != null },
+                    ),
+            )
+        }
+    }
+
+    private suspend fun currentUserShareHealthScore(): Boolean {
+        val currentUserId = authRepository.getCurrentUser()?.id ?: return false
+        return state.value.members.firstOrNull { it.userId == currentUserId }?.shareHealthScore ?: false
+    }
+
+    private fun Int.toHealthScoreLabel(): String =
+        when {
+            this >= 80 -> "Stable"
+            this >= 60 -> "Watch today"
+            else -> "Needs support"
+        }
 }

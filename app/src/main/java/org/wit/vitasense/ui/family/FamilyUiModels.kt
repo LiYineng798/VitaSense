@@ -30,6 +30,7 @@ data class FamilyMemberUiModel(
     val statusLabel: String,
     val supportSummary: String,
     val latestSupportText: String,
+    val shareHealthScore: Boolean,
     val canSendSupport: Boolean,
     val canRemove: Boolean,
     val supportTypes: List<FamilySupportType> = FamilySupportType.entries,

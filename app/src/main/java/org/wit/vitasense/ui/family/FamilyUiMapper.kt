@@ -63,6 +63,7 @@ object FamilyUiMapper {
             statusLabel = statusLabel,
             supportSummary = supportCountToday.supportSummary(),
             latestSupportText = latestSupportType?.displayName.orEmpty(),
+            shareHealthScore = shareHealthScore,
             canSendSupport = !isSelf,
             canRemove = ownerCanManage && !isSelf && role != FamilyRole.OWNER,
         )

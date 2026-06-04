@@ -7,24 +7,32 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.wit.vitasense.db.entity.DailyPhysiologySummaryEntity
+import org.wit.vitasense.db.entity.HeartRateRawSampleEntity
 import org.wit.vitasense.model.AuthResult
 import org.wit.vitasense.model.AuthUser
 import org.wit.vitasense.db.entity.MoodRecordEntity
+import org.wit.vitasense.db.entity.RiskAssessmentRecordEntity
+import org.wit.vitasense.model.DemoBundleInfo
 import org.wit.vitasense.model.Family
 import org.wit.vitasense.model.FamilyMember
 import org.wit.vitasense.model.FamilyResult
 import org.wit.vitasense.model.FamilyRole
 import org.wit.vitasense.model.FamilyStatusSnapshot
 import org.wit.vitasense.model.FamilySupportType
+import org.wit.vitasense.model.ImportOperationResult
+import org.wit.vitasense.model.ImportStatus
 import org.wit.vitasense.model.MoodFilter
 import org.wit.vitasense.model.MoodType
 import org.wit.vitasense.repository.AuthRepository
 import org.wit.vitasense.repository.FamilyRepository
+import org.wit.vitasense.repository.HealthRepository
 import org.wit.vitasense.repository.MoodRepository
 
 class FamilyViewModelTest {
@@ -38,6 +46,7 @@ class FamilyViewModelTest {
                     authRepository = FakeAuthRepository(null),
                     familyRepository = familyRepository,
                     moodRepository = FakeMoodRepository(),
+                    healthRepository = FakeHealthRepository(),
                     scope = scope,
                 )
             val collector = collectState(viewModel, scope)
@@ -62,6 +71,7 @@ class FamilyViewModelTest {
                     authRepository = FakeAuthRepository(AuthUser(1, "Ava Stone", "ava@example.com", "ava", "2000-01-02")),
                     familyRepository = familyRepository,
                     moodRepository = FakeMoodRepository(),
+                    healthRepository = FakeHealthRepository(),
                     scope = scope,
                 )
             val collector = collectState(viewModel, scope)
@@ -92,6 +102,7 @@ class FamilyViewModelTest {
                     authRepository = authRepository,
                     familyRepository = familyRepository,
                     moodRepository = FakeMoodRepository(),
+                    healthRepository = FakeHealthRepository(),
                     scope = scope,
                 )
             val collector = collectState(viewModel, scope)
@@ -120,6 +131,7 @@ class FamilyViewModelTest {
                     authRepository = authRepository,
                     familyRepository = familyRepository,
                     moodRepository = FakeMoodRepository(),
+                    healthRepository = FakeHealthRepository(),
                     scope = scope,
                 )
             val collector = collectState(viewModel, scope)
@@ -153,6 +165,7 @@ class FamilyViewModelTest {
                     authRepository = authRepository,
                     familyRepository = familyRepository,
                     moodRepository = FakeMoodRepository(),
+                    healthRepository = FakeHealthRepository(),
                     scope = scope,
                 )
             val collector = collectState(viewModel, scope)
@@ -188,6 +201,7 @@ class FamilyViewModelTest {
                     authRepository = FakeAuthRepository(AuthUser(2, "Ben Stone", "ben@example.com", "ben", "2001-03-04")),
                     familyRepository = familyRepository,
                     moodRepository = FakeMoodRepository(),
+                    healthRepository = FakeHealthRepository(),
                     scope = scope,
                 )
             val collector = collectState(viewModel, scope)
@@ -211,6 +225,7 @@ class FamilyViewModelTest {
                     authRepository = FakeAuthRepository(AuthUser(1, "Ava Stone", "ava@example.com", "ava", "2000-01-02")),
                     familyRepository = FakeFamilyRepository(),
                     moodRepository = FakeMoodRepository(),
+                    healthRepository = FakeHealthRepository(),
                     scope = scope,
                 )
             val collector = collectState(viewModel, scope)
@@ -238,6 +253,7 @@ class FamilyViewModelTest {
                     authRepository = FakeAuthRepository(AuthUser(1, "Ava Stone", "ava@example.com", "ava", "2000-01-02")),
                     familyRepository = familyRepository,
                     moodRepository = FakeMoodRepository(),
+                    healthRepository = FakeHealthRepository(),
                     scope = scope,
                 )
             val collector = collectState(viewModel, scope)
@@ -263,6 +279,7 @@ class FamilyViewModelTest {
                     authRepository = FakeAuthRepository(AuthUser(1, "Ava Stone", "ava@example.com", "ava", "2000-01-02")),
                     familyRepository = familyRepository,
                     moodRepository = FakeMoodRepository(),
+                    healthRepository = FakeHealthRepository(),
                     scope = scope,
                 )
             val collector = collectState(viewModel, scope)
@@ -288,6 +305,7 @@ class FamilyViewModelTest {
                     authRepository = FakeAuthRepository(AuthUser(1, "Ava Stone", "ava@example.com", "ava", "2000-01-02")),
                     familyRepository = familyRepository,
                     moodRepository = FakeMoodRepository(),
+                    healthRepository = FakeHealthRepository(),
                     scope = scope,
                 )
             val collector = collectState(viewModel, scope)
@@ -325,6 +343,7 @@ class FamilyViewModelTest {
                     authRepository = FakeAuthRepository(AuthUser(1, "Ava Stone", "ava@example.com", "ava", "2000-01-02")),
                     familyRepository = familyRepository,
                     moodRepository = moodRepository,
+                    healthRepository = FakeHealthRepository(),
                     scope = scope,
                 )
             val collector = collectState(viewModel, scope)
@@ -367,6 +386,7 @@ class FamilyViewModelTest {
                     authRepository = FakeAuthRepository(AuthUser(1, "Ava Stone", "ava@example.com", "ava", "2000-01-02")),
                     familyRepository = familyRepository,
                     moodRepository = moodRepository,
+                    healthRepository = FakeHealthRepository(),
                     scope = scope,
                 )
             val collector = collectState(viewModel, scope)
@@ -381,6 +401,64 @@ class FamilyViewModelTest {
 
             assertEquals("HAPPY", familyRepository.lastStatusSnapshot?.moodType)
             assertEquals("better", familyRepository.lastStatusSnapshot?.moodNote)
+
+            collector.cancel()
+            scope.coroutineContext[Job]?.cancel()
+            Unit
+        }
+
+    @Test
+    fun enabling_health_score_sharing_syncs_latest_score_summary() =
+        runBlocking {
+            val scope = CoroutineScope(Job() + Dispatchers.Unconfined)
+            val familyRepository = FakeFamilyRepository()
+            familyRepository.seedFamily(familyNamed("Ava Family", currentUserId = 1))
+            val viewModel =
+                FamilyViewModel(
+                    authRepository = FakeAuthRepository(AuthUser(1, "Ava Stone", "ava@example.com", "ava", "2000-01-02")),
+                    familyRepository = familyRepository,
+                    moodRepository = FakeMoodRepository(),
+                    healthRepository = FakeHealthRepository(risk(totalScore = 82, date = "2026-06-03")),
+                    scope = scope,
+                )
+            val collector = collectState(viewModel, scope)
+
+            yield()
+            viewModel.setShareHealthScore(true)
+            yield()
+
+            assertEquals(true, familyRepository.lastStatusSnapshot?.shareHealthScore)
+            assertEquals(82, familyRepository.lastStatusSnapshot?.healthScore)
+            assertEquals("Stable", familyRepository.lastStatusSnapshot?.healthScoreLabel)
+
+            collector.cancel()
+            scope.coroutineContext[Job]?.cancel()
+            Unit
+        }
+
+    @Test
+    fun disabling_health_score_sharing_syncs_hidden_score_state() =
+        runBlocking {
+            val scope = CoroutineScope(Job() + Dispatchers.Unconfined)
+            val familyRepository = FakeFamilyRepository()
+            familyRepository.seedFamily(familyNamed("Ava Family", currentUserId = 1, shareHealthScore = true))
+            val viewModel =
+                FamilyViewModel(
+                    authRepository = FakeAuthRepository(AuthUser(1, "Ava Stone", "ava@example.com", "ava", "2000-01-02")),
+                    familyRepository = familyRepository,
+                    moodRepository = FakeMoodRepository(),
+                    healthRepository = FakeHealthRepository(risk(totalScore = 91, date = "2026-06-03")),
+                    scope = scope,
+                )
+            val collector = collectState(viewModel, scope)
+
+            yield()
+            viewModel.setShareHealthScore(false)
+            yield()
+
+            assertEquals(false, familyRepository.lastStatusSnapshot?.shareHealthScore)
+            assertEquals(null, familyRepository.lastStatusSnapshot?.healthScore)
+            assertEquals(null, familyRepository.lastStatusSnapshot?.healthScoreLabel)
 
             collector.cancel()
             scope.coroutineContext[Job]?.cancel()
@@ -559,9 +637,36 @@ private class FakeMoodRepository(
     }
 }
 
+private class FakeHealthRepository(
+    private val latestRisk: RiskAssessmentRecordEntity? = null,
+) : HealthRepository {
+    override fun observeLatestHeartRate(): Flow<HeartRateRawSampleEntity?> = flowOf(null)
+
+    override fun observeLatestSummary(): Flow<DailyPhysiologySummaryEntity?> = flowOf(null)
+
+    override fun observeLatestRisk(): Flow<RiskAssessmentRecordEntity?> = flowOf(latestRisk)
+
+    override fun observeSummaries(days: Int): Flow<List<DailyPhysiologySummaryEntity>> = flowOf(emptyList())
+
+    override fun observeRisks(days: Int): Flow<List<RiskAssessmentRecordEntity>> = flowOf(emptyList())
+
+    override suspend fun getAvailableDemoBundles(): List<DemoBundleInfo> = emptyList()
+
+    override suspend fun importDemoBundle(bundleId: String): ImportOperationResult =
+        ImportOperationResult(ImportStatus.SUCCESS, "unused", 0, 0, 0, 0)
+
+    override suspend fun importRawJson(
+        raw: String,
+        sourceName: String,
+    ): ImportOperationResult = ImportOperationResult(ImportStatus.SUCCESS, "unused", 0, 0, 0, 0)
+
+    override suspend fun clearAllData() = Unit
+}
+
 private fun familyNamed(
     name: String,
     currentUserId: Long,
+    shareHealthScore: Boolean = false,
 ): Family =
     Family(
         id = 20,
@@ -582,6 +687,25 @@ private fun familyNamed(
                     supportCountToday = 0,
                     latestSupportType = null,
                     latestSupportSentAt = null,
+                    shareHealthScore = shareHealthScore,
+                    healthScore = if (shareHealthScore) 82 else null,
+                    healthScoreLabel = if (shareHealthScore) "Stable" else null,
+                    healthScoreUpdatedAt = if (shareHealthScore) 1770000000000 else null,
                 ),
             ),
     )
+
+private fun risk(
+    totalScore: Int,
+    date: String,
+) = RiskAssessmentRecordEntity(
+    date = date,
+    totalScore = totalScore,
+    riskLevel = "low",
+    sleepScore = 30,
+    hrvScore = 25,
+    restingHrScore = 15,
+    avgHrScore = totalScore - 70,
+    explanation = "unused",
+    suggestionText = "unused",
+)
