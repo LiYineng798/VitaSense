@@ -159,6 +159,86 @@ def test_family_support_validation_and_dedupe():
         assert isinstance(member_card["latest_support_sent_at"], int)
 
 
+def test_family_health_score_sharing_is_opt_in_and_hides_details():
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+        module = importlib.import_module("main")
+        module.DB_PATH = Path(tmp) / "auth.db"
+        module.initialize_database()
+        client = TestClient(module.app)
+
+        token_owner, owner = register(client, "score-owner")
+        token_member, member = register(client, "score-member")
+
+        created = client.post(
+            "/api/v1/families",
+            json={"name": "Score Family"},
+            headers=auth_headers(token_owner),
+        )
+        assert created.status_code == 200, created.text
+        family = created.json()["family"]
+        joined = client.post(
+            "/api/v1/families/join",
+            json={"invite_code": family["invite_code"]},
+            headers=auth_headers(token_member),
+        )
+        assert joined.status_code == 200, joined.text
+
+        shared = client.post(
+            f"/api/v1/families/{family['id']}/status",
+            json={
+                "mood_type": "CALM",
+                "mood_note": "steady",
+                "status_label": "Checked in today",
+                "updated_at": 1770000000000,
+                "share_health_score": True,
+                "health_score": 82,
+                "health_score_label": "Stable",
+                "health_score_updated_at": 1770000000000,
+                "rmssd": 40,
+                "heart_rate": 60,
+                "sleep_minutes": 420,
+            },
+            headers=auth_headers(token_member),
+        )
+        assert shared.status_code == 200, shared.text
+
+        body = client.get("/api/v1/families/me", headers=auth_headers(token_owner)).json()
+        member_card = next(item for item in body["family"]["members"] if item["user_id"] == member["id"])
+        assert member_card["share_health_score"] is True
+        assert member_card["health_score"] == 82
+        assert member_card["health_score_label"] == "Stable"
+        assert member_card["health_score_updated_at"] == 1770000000000
+        raw = str(body).lower()
+        assert "rmssd" not in raw
+        assert "heart_rate" not in raw
+        assert "sleep_minutes" not in raw
+        assert "total_score" not in raw
+        assert "anomaly_flags" not in raw
+
+        hidden = client.post(
+            f"/api/v1/families/{family['id']}/status",
+            json={
+                "mood_type": "CALM",
+                "mood_note": "steady",
+                "status_label": "Checked in today",
+                "updated_at": 1770000001000,
+                "share_health_score": False,
+                "health_score": 91,
+                "health_score_label": "Stable",
+                "health_score_updated_at": 1770000001000,
+            },
+            headers=auth_headers(token_member),
+        )
+        assert hidden.status_code == 200, hidden.text
+
+        body = client.get("/api/v1/families/me", headers=auth_headers(token_owner)).json()
+        member_card = next(item for item in body["family"]["members"] if item["user_id"] == member["id"])
+        assert member_card["share_health_score"] is False
+        assert member_card["health_score"] is None
+        assert member_card["health_score_label"] is None
+        assert member_card["health_score_updated_at"] is None
+
+
 def test_family_leave_member_and_owner_rules():
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
         module = importlib.import_module("main")
@@ -193,4 +273,5 @@ def test_family_leave_member_and_owner_rules():
 if __name__ == "__main__":
     test_family_create_join_permissions_and_privacy()
     test_family_support_validation_and_dedupe()
+    test_family_health_score_sharing_is_opt_in_and_hides_details()
     test_family_leave_member_and_owner_rules()

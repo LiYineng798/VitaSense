@@ -50,6 +50,10 @@ class FamilyStatusRequest(BaseModel):
     mood_note: str | None = None
     status_label: str
     updated_at: int
+    share_health_score: bool = False
+    health_score: int | None = None
+    health_score_label: str | None = None
+    health_score_updated_at: int | None = None
 
 
 class FamilySupportRequest(BaseModel):
@@ -178,6 +182,10 @@ def initialize_database() -> None:
                 mood_note TEXT,
                 status_label TEXT NOT NULL,
                 updated_at INTEGER NOT NULL,
+                share_health_score INTEGER NOT NULL DEFAULT 0,
+                health_score INTEGER,
+                health_score_label TEXT,
+                health_score_updated_at INTEGER,
                 PRIMARY KEY(family_id, user_id),
                 FOREIGN KEY(family_id, user_id) REFERENCES family_members(family_id, user_id) ON DELETE CASCADE
             );
@@ -259,6 +267,7 @@ def initialize_database() -> None:
             ON cloud_sleep_records(user_id, date);
             """.strip(),
         )
+        ensure_family_status_score_columns(connection)
         migrate_family_supports_table(connection)
         migrate_sync_tables(connection)
 
@@ -268,6 +277,24 @@ def table_exists(connection: sqlite3.Connection, table_name: str) -> bool:
         "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
         (table_name,),
     ).fetchone() is not None
+
+
+def table_columns(connection: sqlite3.Connection, table_name: str) -> set[str]:
+    return {str(row["name"]) for row in connection.execute(f"PRAGMA table_info({table_name})").fetchall()}
+
+
+def ensure_family_status_score_columns(connection: sqlite3.Connection) -> None:
+    if not table_exists(connection, "family_status_snapshots"):
+        return
+    columns = table_columns(connection, "family_status_snapshots")
+    if "share_health_score" not in columns:
+        connection.execute("ALTER TABLE family_status_snapshots ADD COLUMN share_health_score INTEGER NOT NULL DEFAULT 0")
+    if "health_score" not in columns:
+        connection.execute("ALTER TABLE family_status_snapshots ADD COLUMN health_score INTEGER")
+    if "health_score_label" not in columns:
+        connection.execute("ALTER TABLE family_status_snapshots ADD COLUMN health_score_label TEXT")
+    if "health_score_updated_at" not in columns:
+        connection.execute("ALTER TABLE family_status_snapshots ADD COLUMN health_score_updated_at INTEGER")
 
 
 def has_global_id_primary_key(connection: sqlite3.Connection, table_name: str) -> bool:
@@ -607,6 +634,10 @@ def serialize_family(connection: sqlite3.Connection, family_id: int, current_use
             family_status_snapshots.mood_note,
             family_status_snapshots.status_label,
             family_status_snapshots.updated_at AS status_updated_at,
+            family_status_snapshots.share_health_score,
+            family_status_snapshots.health_score,
+            family_status_snapshots.health_score_label,
+            family_status_snapshots.health_score_updated_at,
             (
                 SELECT COUNT(*)
                 FROM family_supports
@@ -643,8 +674,11 @@ def serialize_family(connection: sqlite3.Connection, family_id: int, current_use
         (support_date, support_date, support_date, family_id),
     ).fetchall()
 
-    members = [
-        {
+    members = []
+    for row in rows:
+        share_health_score = bool(row["share_health_score"])
+        members.append(
+            {
             "user_id": row["user_id"],
             "full_name": row["full_name"],
             "username": row["username"],
@@ -657,9 +691,12 @@ def serialize_family(connection: sqlite3.Connection, family_id: int, current_use
             "support_count_today": row["support_count_today"],
             "latest_support_type": row["latest_support_type"],
             "latest_support_sent_at": row["latest_support_sent_at"],
-        }
-        for row in rows
-    ]
+            "share_health_score": share_health_score,
+            "health_score": row["health_score"] if share_health_score else None,
+            "health_score_label": row["health_score_label"] if share_health_score else None,
+            "health_score_updated_at": row["health_score_updated_at"] if share_health_score else None,
+            },
+        )
 
     return {
         "id": family["id"],
@@ -1120,15 +1157,26 @@ def update_family_status(family_id: int, payload: FamilyStatusRequest, authoriza
         membership = require_family_membership(connection, family_id, user_id)
         if isinstance(membership, JSONResponse):
             return membership
+        share_health_score = 1 if payload.share_health_score else 0
+        health_score = payload.health_score if payload.share_health_score else None
+        health_score_label = payload.health_score_label if payload.share_health_score else None
+        health_score_updated_at = payload.health_score_updated_at if payload.share_health_score else None
         connection.execute(
             """
-            INSERT INTO family_status_snapshots(family_id, user_id, mood_type, mood_note, status_label, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO family_status_snapshots(
+                family_id, user_id, mood_type, mood_note, status_label, updated_at,
+                share_health_score, health_score, health_score_label, health_score_updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(family_id, user_id) DO UPDATE SET
                 mood_type = excluded.mood_type,
                 mood_note = excluded.mood_note,
                 status_label = excluded.status_label,
-                updated_at = excluded.updated_at
+                updated_at = excluded.updated_at,
+                share_health_score = excluded.share_health_score,
+                health_score = excluded.health_score,
+                health_score_label = excluded.health_score_label,
+                health_score_updated_at = excluded.health_score_updated_at
             """.strip(),
             (
                 family_id,
@@ -1137,6 +1185,10 @@ def update_family_status(family_id: int, payload: FamilyStatusRequest, authoriza
                 payload.mood_note.strip() if payload.mood_note is not None else None,
                 payload.status_label.strip(),
                 payload.updated_at,
+                share_health_score,
+                health_score,
+                health_score_label,
+                health_score_updated_at,
             ),
         )
         body = family_response(connection, family_id, user_id, "Family status updated.")
