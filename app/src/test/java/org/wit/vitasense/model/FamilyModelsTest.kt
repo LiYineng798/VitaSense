@@ -64,4 +64,42 @@ class FamilyModelsTest {
         assertEquals(FamilySupportType.NEED_ANYTHING, FamilySupportType.fromStorageKey("need_anything"))
         assertTrue(familyErrorMessage("invalid_invite_code").contains("Invalid"))
     }
+
+    @Test
+    fun parses_shared_health_score_fields() {
+        val family =
+            parseFamily(
+                """
+                {
+                  "id": 1,
+                  "name": "Stone Family",
+                  "invite_code": "ABC123",
+                  "current_user_role": "member",
+                  "members": [
+                    {
+                      "user_id": 2,
+                      "full_name": "Ben Stone",
+                      "username": "ben",
+                      "role": "member",
+                      "mood_type": "CALM",
+                      "mood_note": "steady",
+                      "status_label": "Checked in today",
+                      "status_updated_at": 1770000000000,
+                      "support_count_today": 0,
+                      "share_health_score": true,
+                      "health_score": 82,
+                      "health_score_label": "Stable",
+                      "health_score_updated_at": 1770000000000
+                    }
+                  ]
+                }
+                """.trimIndent(),
+            )
+
+        val member = family.members.single()
+        assertEquals(true, member.shareHealthScore)
+        assertEquals(82, member.healthScore)
+        assertEquals("Stable", member.healthScoreLabel)
+        assertEquals(1770000000000, member.healthScoreUpdatedAt)
+    }
 }

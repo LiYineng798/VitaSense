@@ -44,6 +44,10 @@ data class FamilyMember(
     val supportCountToday: Int,
     val latestSupportType: FamilySupportType?,
     val latestSupportSentAt: Long?,
+    val shareHealthScore: Boolean = false,
+    val healthScore: Int? = null,
+    val healthScoreLabel: String? = null,
+    val healthScoreUpdatedAt: Long? = null,
 )
 
 data class Family(
@@ -59,6 +63,10 @@ data class FamilyStatusSnapshot(
     val moodNote: String?,
     val statusLabel: String,
     val updatedAt: Long,
+    val shareHealthScore: Boolean = false,
+    val healthScore: Int? = null,
+    val healthScoreLabel: String? = null,
+    val healthScoreUpdatedAt: Long? = null,
 )
 
 data class FamilyHomeSummary(
@@ -102,6 +110,10 @@ fun parseFamily(obj: JSONObject): Family {
                     supportCountToday = member.optInt("support_count_today", 0),
                     latestSupportType = FamilySupportType.fromStorageKey(member.optionalString("latest_support_type")),
                     latestSupportSentAt = member.optNullableLong("latest_support_sent_at"),
+                    shareHealthScore = member.optBoolean("share_health_score", false),
+                    healthScore = member.optNullableInt("health_score"),
+                    healthScoreLabel = member.optionalString("health_score_label"),
+                    healthScoreUpdatedAt = member.optNullableLong("health_score_updated_at"),
                 )
             },
     )
@@ -145,6 +157,13 @@ fun familyErrorMessage(code: String): String =
 fun JSONObject.optNullableLong(name: String): Long? =
     if (has(name) && !isNull(name)) {
         optLong(name)
+    } else {
+        null
+    }
+
+fun JSONObject.optNullableInt(name: String): Int? =
+    if (has(name) && !isNull(name)) {
+        optInt(name)
     } else {
         null
     }

@@ -3,6 +3,7 @@ package org.wit.vitasense.data.repository
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import java.util.concurrent.CancellationException
+import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -89,6 +90,47 @@ class DefaultFamilyRepositoryTest {
             assertFalse(body.contains("rmssd"))
             assertFalse(body.contains("heart_rate"))
             assertFalse(body.contains("sleep_minutes"))
+        }
+
+    @Test
+    fun upsertStatus_payload_includes_only_score_summary_fields_when_enabled() =
+        runBlocking {
+            var capturedBody = ""
+            val repository =
+                DefaultFamilyRepository(
+                    baseUrlProvider = { "https://server.np5.top" },
+                    tokenProvider = { "token" },
+                    request = { _, _, _, body ->
+                        capturedBody = body.orEmpty()
+                        FamilyNetworkResponse(200, """{"success":true,"family":null}""")
+                    },
+                )
+
+            repository.upsertStatus(
+                familyId = 5,
+                snapshot =
+                    FamilyStatusSnapshot(
+                        moodType = "CALM",
+                        moodNote = "steady",
+                        statusLabel = "Checked in today",
+                        updatedAt = 1770000000000,
+                        shareHealthScore = true,
+                        healthScore = 82,
+                        healthScoreLabel = "Stable",
+                        healthScoreUpdatedAt = 1770000000000,
+                    ),
+            )
+
+            val payload = JSONObject(capturedBody)
+            assertEquals(true, payload.getBoolean("share_health_score"))
+            assertEquals(82, payload.getInt("health_score"))
+            assertEquals("Stable", payload.getString("health_score_label"))
+            assertEquals(1770000000000, payload.getLong("health_score_updated_at"))
+            val raw = capturedBody.lowercase()
+            assertFalse(raw.contains("rmssd"))
+            assertFalse(raw.contains("heart_rate"))
+            assertFalse(raw.contains("sleep"))
+            assertFalse(raw.contains("anomaly"))
         }
 
     @Test

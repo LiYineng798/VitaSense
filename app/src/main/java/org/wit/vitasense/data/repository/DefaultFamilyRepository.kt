@@ -94,6 +94,10 @@ class DefaultFamilyRepository(
                     .put("mood_note", snapshot.moodNote)
                     .put("status_label", snapshot.statusLabel)
                     .put("updated_at", snapshot.updatedAt)
+                    .put("share_health_score", snapshot.shareHealthScore)
+                    .put("health_score", if (snapshot.shareHealthScore) snapshot.healthScore else JSONObject.NULL)
+                    .put("health_score_label", if (snapshot.shareHealthScore) snapshot.healthScoreLabel else JSONObject.NULL)
+                    .put("health_score_updated_at", if (snapshot.shareHealthScore) snapshot.healthScoreUpdatedAt else JSONObject.NULL)
                     .toString(),
         )
 
