@@ -48,6 +48,9 @@ class FamilyMemberAdapter(
             binding.memberAvatarText.text = item.avatarInitial
             binding.memberNameText.text = item.displayName
             binding.memberRoleText.text = item.roleLabel
+            binding.moodSectionTitleText.text = item.moodSectionTitle
+            binding.healthSectionTitleText.text = item.healthSectionTitle
+            binding.supportSectionTitleText.text = item.supportSectionTitle
             binding.memberMoodText.text = item.moodLabel
             binding.memberNoteText.text = item.moodNote.orEmpty()
             binding.memberNoteText.isVisible = !item.moodNote.isNullOrBlank()
@@ -73,6 +76,7 @@ class FamilyMemberAdapter(
             binding.supportTakePauseButton.isVisible = item.canSendSupport
             binding.supportProudButton.isVisible = item.canSendSupport
             binding.removeMemberButton.isVisible = item.canRemove
+            binding.memberControlsSection.isVisible = item.showShareHealthScoreSwitch || item.canRemove
             binding.supportThinkingButton.setOnClickListener {
                 onSupport(item.userId, FamilySupportType.THINKING_OF_YOU)
             }
