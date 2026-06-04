@@ -144,6 +144,43 @@ class FamilyUiMapperTest {
         assertEquals(false, state.members.single().shareHealthScore)
     }
 
+    @Test
+    fun member_card_exposes_section_labels_for_clear_grouping() {
+        val state =
+            FamilyUiMapper.build(
+                currentUserId = 1,
+                isSignedIn = true,
+                family =
+                    family(
+                        currentUserRole = FamilyRole.MEMBER,
+                        members =
+                            listOf(
+                                member(
+                                    userId = 1,
+                                    fullName = "Ava Stone",
+                                    username = "ava",
+                                    role = FamilyRole.MEMBER,
+                                    moodType = "CALM",
+                                    shareHealthScore = true,
+                                    healthScore = 82,
+                                    healthScoreLabel = "Stable",
+                                    healthScoreUpdatedAt = 1770000000000,
+                                ),
+                            ),
+                    ),
+                isLoading = false,
+                errorMessage = null,
+            )
+
+        val member = state.members.single()
+        assertEquals("Mood", member.moodSectionTitle)
+        assertEquals("Health", member.healthSectionTitle)
+        assertEquals("Support", member.supportSectionTitle)
+        assertEquals("Calm", member.moodLabel)
+        assertEquals("Health Score 82", member.healthScoreText)
+        assertEquals("Stable", member.healthScoreDetailText)
+    }
+
     private fun family(
         currentUserRole: FamilyRole,
         members: List<FamilyMember>,
