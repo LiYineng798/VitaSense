@@ -17,6 +17,7 @@ import org.wit.vitasense.R
 import org.wit.vitasense.VitaSenseApplication
 import org.wit.vitasense.databinding.FragmentDashboardBinding
 import org.wit.vitasense.ui.common.VitaSenseViewModelFactory
+import org.wit.vitasense.ui.common.markdown.MarkdownTextRenderer
 import org.wit.vitasense.ui.navigation.BottomTabDestination
 import org.wit.vitasense.ui.navigation.TopLevelNavigator
 import org.wit.vitasense.ui.theme.ThemeAttrColorResolver
@@ -152,24 +153,33 @@ class DashboardFragment : Fragment() {
 
     private fun renderAiAdvice(ai: DashboardAiAdviceState) {
         binding.aiAdviceStatusText.text = ai.errorText ?: ai.statusText
-        val summaryText =
+        val markdownText =
             buildString {
                 if (ai.summary.isNotBlank()) {
-                    append(ai.summary)
+                    append(ai.summary.trim())
                 }
                 if (ai.recommendations.isNotEmpty()) {
                     if (isNotBlank()) append("\n\n")
                     ai.recommendations.forEach { recommendation ->
-                        append("- ").append(recommendation).append("\n")
+                        append("- ").append(recommendation.trim()).append("\n")
                     }
                 }
+                if (ai.riskNote.isNotBlank()) {
+                    if (isNotBlank()) append("\n\n")
+                    append(ai.riskNote.trim())
+                }
                 if (ai.disclaimer.isNotBlank()) {
-                    if (isNotBlank()) append("\n")
-                    append(ai.disclaimer)
+                    if (isNotBlank()) append("\n\n")
+                    append(ai.disclaimer.trim())
                 }
             }.trim()
-        binding.aiAdviceSummaryText.text = summaryText
-        binding.aiAdviceSummaryText.visibility = if (summaryText.isBlank()) View.GONE else View.VISIBLE
+        binding.aiAdviceSummaryText.text =
+            if (markdownText.isBlank()) {
+                ""
+            } else {
+                MarkdownTextRenderer.render(markdownText)
+            }
+        binding.aiAdviceSummaryText.visibility = if (markdownText.isBlank()) View.GONE else View.VISIBLE
         binding.aiAdviceProgress.visibility = if (ai.showProgress) View.VISIBLE else View.GONE
         binding.aiAdviceActionButton.text = ai.actionText
         binding.aiAdviceActionButton.isEnabled = ai.canGenerate || ai.shouldOpenSettings
