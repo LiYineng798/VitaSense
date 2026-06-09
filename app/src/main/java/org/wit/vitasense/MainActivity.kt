@@ -167,6 +167,9 @@ class MainActivity : AppCompatActivity(), TopLevelNavigator {
         findViewById<View>(R.id.tabTrends).setOnClickListener {
             navigateToBottomDestination(BottomTabDestination.TRENDS)
         }
+        findViewById<View>(R.id.tabAiChat).setOnClickListener {
+            navController.navigate(R.id.aiChatFragment)
+        }
         findViewById<View>(R.id.tabMood).setOnClickListener {
             navigateToBottomDestination(BottomTabDestination.MOOD)
         }

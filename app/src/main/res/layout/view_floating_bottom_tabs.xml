@@ -100,6 +100,37 @@
                     android:textStyle="bold" />
             </LinearLayout>
 
+            <FrameLayout
+                android:id="@+id/tabAiChat"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/vs_bottom_tab_item_height"
+                android:layout_weight="1"
+                android:contentDescription="@string/nav_ai_chat"
+                android:foreground="?attr/selectableItemBackgroundBorderless">
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/tabAiChatButton"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:layout_gravity="center"
+                    app:cardBackgroundColor="?attr/vsColorPrimaryStrong"
+                    app:cardCornerRadius="28dp"
+                    app:cardElevation="8dp"
+                    app:strokeWidth="0dp">
+
+                    <TextView
+                        android:id="@+id/tabAiChatLabel"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:includeFontPadding="false"
+                        android:text="@string/nav_ai_chat"
+                        android:textColor="?attr/colorOnPrimary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+                </com.google.android.material.card.MaterialCardView>
+            </FrameLayout>
+
             <LinearLayout
                 android:id="@+id/tabMood"
                 android:layout_width="0dp"

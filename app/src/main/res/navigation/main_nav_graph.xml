@@ -48,4 +48,9 @@
         android:id="@+id/familyFragment"
         android:name="org.wit.vitasense.ui.family.FamilyFragment"
         android:label="@string/family_title" />
+
+    <fragment
+        android:id="@+id/aiChatFragment"
+        android:name="org.wit.vitasense.ui.aichat.AiChatFragment"
+        android:label="@string/ai_chat_title" />
 </navigation>
