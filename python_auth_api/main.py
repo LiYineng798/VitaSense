@@ -7,17 +7,19 @@ import sqlite3
 import time
 import urllib.error
 import urllib.request
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, Header
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
 APP_DIR = Path(__file__).resolve().parent
 DB_PATH = APP_DIR / "auth.db"
 
 app = FastAPI(title="VitaSense Auth API")
+urlopen_for_ai = urllib.request.urlopen
 
 
 class RegisterRequest(BaseModel):
@@ -79,6 +81,20 @@ class AiAdviceRequest(BaseModel):
     model: str
     api_key: str
     health_summary: HealthSummaryPayload
+
+
+class AiChatMessagePayload(BaseModel):
+    role: str
+    content: str
+
+
+class AiChatRequest(BaseModel):
+    provider: str
+    base_url: str
+    model: str
+    api_key: str
+    messages: list[AiChatMessagePayload]
+    health_context: dict[str, Any] = {}
 
 
 class SyncSettingsPayload(BaseModel):
@@ -791,6 +807,20 @@ def validate_ai_payload(payload: AiAdviceRequest) -> JSONResponse | None:
     return None
 
 
+def validate_ai_chat_payload(payload: AiChatRequest) -> JSONResponse | None:
+    if not payload.api_key.strip():
+        return ai_error(400, "missing_api_key", "Add an API key in Settings first.")
+    if not payload.model.strip():
+        return ai_error(400, "missing_model", "Add a model name in Settings first.")
+    if not payload.base_url.strip():
+        return ai_error(400, "missing_base_url", "Add an AI base URL in Settings first.")
+    if payload.provider.strip().lower() not in {"deepseek", "openai_compatible"}:
+        return ai_error(400, "unsupported_provider", "The selected AI provider is not supported.")
+    if not any(message.role.strip().lower() == "user" and message.content.strip() for message in payload.messages):
+        return ai_error(400, "empty_message", "Enter a message before sending.")
+    return None
+
+
 def build_ai_messages(summary: HealthSummaryPayload) -> list[dict[str, str]]:
     system = (
         "You are a wellness support coach for VitaSense. Use only the provided metrics. "
@@ -803,6 +833,31 @@ def build_ai_messages(summary: HealthSummaryPayload) -> list[dict[str, str]]:
         {"role": "system", "content": system},
         {"role": "user", "content": f"Generate 2 to 4 practical suggestions from this data: {user}"},
     ]
+
+
+def build_chat_system_message(health_context: dict[str, Any]) -> str:
+    return (
+        "You are VitaSense AI Chat. Help the user reflect on their health trends, mood, "
+        "stress, and recovery state using the provided VitaSense context. This is health "
+        "support and state review, not a medical diagnosis. Encourage practical, low-risk "
+        "next steps. For urgent, severe, or dangerous symptoms, recommend professional or "
+        "emergency help.\n\n"
+        f"Recent VitaSense context JSON: {json.dumps(health_context, ensure_ascii=False)}"
+    )
+
+
+def provider_chat_messages(payload: AiChatRequest) -> list[dict[str, str]]:
+    messages = [{"role": "system", "content": build_chat_system_message(payload.health_context)}]
+    for message in payload.messages[-20:]:
+        role = message.role.strip().lower()
+        content = message.content.strip()
+        if role in {"user", "assistant"} and content:
+            messages.append({"role": role, "content": content})
+    return messages
+
+
+def chat_completion_url(base_url: str) -> str:
+    return base_url.strip().rstrip("/") + "/chat/completions"
 
 
 def parse_advice_text(raw_text: str) -> dict[str, Any]:
@@ -844,6 +899,64 @@ def call_openai_compatible(payload: AiAdviceRequest) -> dict[str, Any]:
         provider_body = json.loads(response.read().decode("utf-8"))
     content = provider_body["choices"][0]["message"]["content"]
     return parse_advice_text(content)
+
+
+def stream_chat_completion(payload: AiChatRequest) -> Iterator[str]:
+    body = json.dumps(
+        {
+            "model": payload.model.strip(),
+            "messages": provider_chat_messages(payload),
+            "stream": True,
+        },
+    ).encode("utf-8")
+    request = urllib.request.Request(
+        url=chat_completion_url(payload.base_url),
+        data=body,
+        headers={
+            "Content-Type": "application/json",
+            "Accept": "text/event-stream",
+            "Authorization": f"Bearer {payload.api_key.strip()}",
+        },
+        method="POST",
+    )
+    try:
+        with urlopen_for_ai(request, timeout=45) as response:
+            for raw_line in response:
+                line = raw_line.decode("utf-8").strip()
+                if not line.startswith("data:"):
+                    continue
+                data = line.removeprefix("data:").strip()
+                if data == "[DONE]":
+                    yield "data: " + json.dumps({"done": True}) + "\n\n"
+                    return
+                try:
+                    provider_event = json.loads(data)
+                    delta = provider_event.get("choices", [{}])[0].get("delta", {}).get("content", "")
+                except (json.JSONDecodeError, KeyError, IndexError, TypeError):
+                    delta = ""
+                if delta:
+                    yield "data: " + json.dumps({"delta": delta}) + "\n\n"
+            yield "data: " + json.dumps({"done": True}) + "\n\n"
+    except urllib.error.HTTPError as exc:
+        error_response = map_provider_error(exc)
+        error_body = json.loads(error_response.body.decode("utf-8"))
+        yield "data: " + json.dumps(
+            {
+                "error": {
+                    "code": error_body.get("code", "unexpected_ai_response"),
+                    "message": error_body.get("message", "The AI service returned an unexpected response."),
+                },
+            },
+        ) + "\n\n"
+    except (urllib.error.URLError, TimeoutError):
+        yield "data: " + json.dumps(
+            {
+                "error": {
+                    "code": "ai_network_error",
+                    "message": "Unable to reach the AI service. Check your network or base URL.",
+                },
+            },
+        ) + "\n\n"
 
 
 def map_provider_error(exc: urllib.error.HTTPError) -> JSONResponse:
@@ -1437,3 +1550,11 @@ def ai_advice(payload: AiAdviceRequest):
         "success": True,
         "advice": advice,
     }
+
+
+@app.post("/api/v1/ai/chat/stream")
+def ai_chat_stream(payload: AiChatRequest):
+    validation_error = validate_ai_chat_payload(payload)
+    if validation_error is not None:
+        return validation_error
+    return StreamingResponse(stream_chat_completion(payload), media_type="text/event-stream")
