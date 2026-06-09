@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import org.wit.vitasense.AppContainer
 import org.wit.vitasense.ui.assessment.AssessmentViewModel
 import org.wit.vitasense.ui.auth.AuthViewModel
+import org.wit.vitasense.ui.aichat.AiChatViewModel
 import org.wit.vitasense.ui.dashboard.DashboardViewModel
 import org.wit.vitasense.ui.family.FamilyViewModel
 import org.wit.vitasense.ui.mood.MoodViewModel
@@ -59,6 +60,12 @@ class VitaSenseViewModelFactory(
                     healthRepository = appContainer.healthRepository,
                     settingsRepository = appContainer.settingsRepository,
                     cloudSyncRepository = appContainer.cloudSyncRepository,
+                ) as T
+
+            modelClass.isAssignableFrom(AiChatViewModel::class.java) ->
+                AiChatViewModel(
+                    aiChatRepository = appContainer.aiChatRepository,
+                    settingsRepository = appContainer.settingsRepository,
                 ) as T
 
             else -> error("Unknown ViewModel class: ${modelClass.name}")

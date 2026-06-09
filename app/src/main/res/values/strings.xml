@@ -7,6 +7,7 @@
     <string name="nav_mood">Mood</string>
     <string name="nav_profile">Profile</string>
     <string name="nav_settings">Settings</string>
+    <string name="nav_ai_chat">AI</string>
 
     <string name="dashboard_placeholder">VitaSense is preparing your view for today.</string>
     <string name="trends_placeholder">This page will show changes across the last 7 and 30 days.</string>
@@ -172,6 +173,14 @@
     <string name="profile_family_button_label">Family</string>
     <string name="dashboard_family_title">Family</string>
     <string name="dashboard_family_summary_format">%1$d updates today / %2$d support received</string>
+
+    <string name="ai_chat_title">AI Chat</string>
+    <string name="ai_chat_new">New</string>
+    <string name="ai_chat_delete">Delete</string>
+    <string name="ai_chat_input_hint">Ask about your current state</string>
+    <string name="ai_chat_send">Send</string>
+    <string name="ai_chat_setup_required">Set up AI provider settings before starting a chat.</string>
+    <string name="ai_chat_generating">Generating...</string>
 
     <string name="auth_subtitle">Use your VitaSense server account to sign in or create a new account.</string>
     <string name="auth_login_tab">Login</string>
