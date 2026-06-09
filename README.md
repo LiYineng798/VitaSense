@@ -227,7 +227,7 @@ Build instrumentation APK:
 ./gradlew.bat :app:assembleDebugAndroidTest
 ```
 
-Open the project in Android Studio and run the `app` configuration on a device or emulator.
+Open the project in the Android Studio and run the `app` configuration on a device or emulator.
 
 ### Python Auth API
 
