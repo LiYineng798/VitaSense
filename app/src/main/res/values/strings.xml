@@ -179,7 +179,7 @@
     <string name="ai_chat_delete">Delete</string>
     <string name="ai_chat_input_hint">Ask about your current state</string>
     <string name="ai_chat_send">Send</string>
-    <string name="ai_chat_setup_required">Set up AI provider settings before starting a chat.</string>
+    <string name="ai_chat_setup_required">AI chat is disabled until you add an API key, base URL, and model in Settings.</string>
     <string name="ai_chat_generating">Generating...</string>
 
     <string name="auth_subtitle">Use your VitaSense server account to sign in or create a new account.</string>

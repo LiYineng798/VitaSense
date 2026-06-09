@@ -56,6 +56,12 @@ class AiChatFragment : Fragment() {
         binding.aiChatTitleText.text = state.title
         adapter.submitList(state.messages)
         binding.aiChatSetupText.visibility = if (state.setupRequired) View.VISIBLE else View.GONE
+        binding.aiChatInputLayout.helperText =
+            if (state.setupRequired) {
+                getString(org.wit.vitasense.R.string.ai_chat_setup_required)
+            } else {
+                null
+            }
         binding.aiChatProgress.visibility = if (state.isGenerating) View.VISIBLE else View.GONE
         binding.aiChatSendButton.isEnabled = !state.setupRequired && !state.isGenerating
         binding.aiChatInput.isEnabled = !state.setupRequired && !state.isGenerating

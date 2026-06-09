@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import org.wit.vitasense.databinding.ItemAiChatMessageBinding
+import org.wit.vitasense.ui.common.markdown.MarkdownTextRenderer
 
 class AiChatMessageAdapter :
     ListAdapter<AiChatMessageUiModel, AiChatMessageAdapter.MessageViewHolder>(Diff) {
@@ -38,7 +39,12 @@ class AiChatMessageAdapter :
                 params.marginEnd = 0
             }
             binding.messageContainer.layoutParams = params
-            binding.messageText.text = item.content.ifBlank { " " }
+            binding.messageText.text =
+                if (item.isAssistant) {
+                    MarkdownTextRenderer.render(item.content.ifBlank { " " })
+                } else {
+                    item.content.ifBlank { " " }
+                }
             binding.messageProgress.visibility = if (item.isStreaming) View.VISIBLE else View.GONE
             binding.messageErrorText.visibility = if (item.errorText.isNullOrBlank()) View.GONE else View.VISIBLE
             binding.messageErrorText.text = item.errorText.orEmpty()
