@@ -3,8 +3,11 @@ package org.wit.vitasense
 import android.content.Context
 import androidx.room.Room
 import kotlinx.coroutines.runBlocking
+import org.wit.vitasense.data.repository.AiChatHealthContextBuilder
 import org.wit.vitasense.data.importer.DemoImportProvider
 import org.wit.vitasense.data.repository.DefaultAiAdviceRepository
+import org.wit.vitasense.data.repository.DefaultAiChatRemoteDataSource
+import org.wit.vitasense.data.repository.DefaultAiChatRepository
 import org.wit.vitasense.data.repository.DefaultAuthRepository
 import org.wit.vitasense.data.repository.DefaultCloudSyncRepository
 import org.wit.vitasense.data.repository.DefaultFamilyRepository
@@ -14,6 +17,7 @@ import org.wit.vitasense.data.repository.DefaultSettingsRepository
 import org.wit.vitasense.db.AppDatabase
 import org.wit.vitasense.domain.DerivedContentSync
 import org.wit.vitasense.domain.HealthRecomputeEngine
+import org.wit.vitasense.repository.AiChatRepository
 import org.wit.vitasense.repository.AiAdviceRepository
 import org.wit.vitasense.repository.AuthRepository
 import org.wit.vitasense.repository.CloudSyncRepository
@@ -94,6 +98,20 @@ class AppContainer(
 
     val aiAdviceRepository: AiAdviceRepository by lazy {
         DefaultAiAdviceRepository(proxyBaseUrl = DEFAULT_AI_PROXY_BASE_URL)
+    }
+
+    val aiChatRepository: AiChatRepository by lazy {
+        DefaultAiChatRepository(
+            sessionDao = database.aiChatSessionDao(),
+            messageDao = database.aiChatMessageDao(),
+            settingsRepository = settingsRepository,
+            remoteDataSource = DefaultAiChatRemoteDataSource(proxyBaseUrl = DEFAULT_AI_PROXY_BASE_URL),
+            healthContextBuilder =
+                AiChatHealthContextBuilder(
+                    healthRepository = healthRepository,
+                    moodRepository = moodRepository,
+                ),
+        )
     }
 
     val familyRepository: FamilyRepository by lazy {
