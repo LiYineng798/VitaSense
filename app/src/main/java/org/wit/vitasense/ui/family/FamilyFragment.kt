@@ -44,11 +44,12 @@ class FamilyFragment : Fragment() {
     ) {
         super.onViewCreated(view, savedInstanceState)
 
+        binding.familySafetyButton.setOnClickListener { findNavController().navigate(R.id.familySafetyFragment) }
         adapter =
             FamilyMemberAdapter(
                 onSupport = ::sendSupport,
                 onRemove = ::removeMember,
-                onShareHealthScoreChanged = viewModel::setShareHealthScore,
+                onShareHealthScoreChanged = { findNavController().navigate(R.id.familySafetyFragment) },
             )
         binding.memberRecyclerView.adapter = adapter
 
@@ -90,7 +91,7 @@ class FamilyFragment : Fragment() {
         binding.regenerateCodeButton.isVisible = state.canManageFamily
         binding.leaveFamilyButton.isVisible = state.canLeaveFamily
         adapter.submitItems(state.members)
-        syncStatusIfNeeded(state)
+        // Status sharing is explicitly initiated from Family Support.
     }
 
     private fun syncStatusIfNeeded(state: FamilyScreenState) {

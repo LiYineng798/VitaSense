@@ -7,6 +7,8 @@ import org.wit.vitasense.model.FamilyStatusSnapshot
 import org.wit.vitasense.model.FamilySupportType
 
 interface FamilyRepository {
+    suspend fun checkInHistory(familyId: Long): List<String> = emptyList()
+
     fun observeCachedFamily(): Flow<Family?>
 
     fun clearCache()

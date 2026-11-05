@@ -87,6 +87,7 @@ class MainActivity : AppCompatActivity(), TopLevelNavigator {
             supportFragmentManager.findFragmentById(R.id.nav_host) as NavHostFragment
         navController = navHostFragment.navController
         bindFloatingTabs()
+        routeNotification(intent)
         navController.addOnDestinationChangedListener { _, destination, _ ->
             BottomTabDestination.fromDestinationId(destination.id)?.let { matched ->
                 val needsSync = selectedBottomDestination != matched
@@ -120,6 +121,26 @@ class MainActivity : AppCompatActivity(), TopLevelNavigator {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        routeNotification(intent)
+    }
+
+    private fun routeNotification(intent: android.content.Intent) {
+        val target = intent.getStringExtra("destination") ?: return
+        intent.removeExtra("destination")
+        val id = when (target) {
+            "mood" -> R.id.moodFragment
+            "trends" -> R.id.trendsFragment
+            "reports" -> R.id.weeklyReportsFragment
+            "family" -> R.id.familySafetyFragment
+            else -> R.id.dashboardFragment
+        }
+        navController.navigate(id, Bundle().apply { putBoolean("confirm_ok",intent.getBooleanExtra("confirm_ok",false)) })
+        intent.removeExtra("confirm_ok")
     }
 
     override fun navigateToBottomDestination(destination: BottomTabDestination) {

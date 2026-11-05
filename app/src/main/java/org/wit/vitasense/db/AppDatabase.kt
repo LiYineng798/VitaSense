@@ -25,6 +25,8 @@ import org.wit.vitasense.db.entity.SleepRecordEntity
 
 @Database(
     entities = [
+        org.wit.vitasense.db.entity.TrustedContactEntity::class,
+        org.wit.vitasense.db.entity.ReminderScheduleEntity::class,
         HeartRateRawSampleEntity::class,
         SleepRecordEntity::class,
         DailyPhysiologySummaryEntity::class,
@@ -36,10 +38,12 @@ import org.wit.vitasense.db.entity.SleepRecordEntity
         AiChatSessionEntity::class,
         AiChatMessageEntity::class,
     ],
-    version = 4,
+    version = 6,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
+    abstract fun reminderScheduleDao(): org.wit.vitasense.db.dao.ReminderScheduleDao
+    abstract fun trustedContactDao(): org.wit.vitasense.db.dao.TrustedContactDao
     abstract fun heartRateRawSampleDao(): HeartRateRawSampleDao
     abstract fun sleepRecordDao(): SleepRecordDao
     abstract fun dailySummaryDao(): DailySummaryDao

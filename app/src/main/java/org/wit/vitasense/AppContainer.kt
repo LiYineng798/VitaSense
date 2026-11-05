@@ -36,8 +36,8 @@ class AppContainer(
 
     private val database: AppDatabase by lazy {
         Room.databaseBuilder(context, AppDatabase::class.java, "vitasense.db")
-            .fallbackToDestructiveMigration()
-            .build()
+            .addMigrations(org.wit.vitasense.db.FeatureMigrations.MIGRATION_4_5, org.wit.vitasense.db.FeatureMigrations.MIGRATION_5_6)
+            .build().also { org.wit.vitasense.widget.WidgetUpdates.observe(context, it) }
     }
 
     private val demoImportProvider: DemoImportProvider by lazy {
@@ -96,6 +96,20 @@ class AppContainer(
         )
     }
 
+    val remindersRepository by lazy { org.wit.vitasense.data.repository.RemindersRepository(database) }
+    val reminderScheduler by lazy { org.wit.vitasense.background.ReminderScheduler(context) }
+
+    val familySafetyRepository by lazy {
+        org.wit.vitasense.data.repository.FamilySafetyRepository(database, settingsRepository, familyRepository)
+    }
+
+    val weeklyReportsRepository by lazy { org.wit.vitasense.data.repository.WeeklyReportsRepository(healthInsightsRepository) }
+
+    val healthInsightsRepository by lazy {
+        org.wit.vitasense.data.repository.HealthInsightsRepository(database, settingsRepository,
+            DefaultAiChatRemoteDataSource(proxyBaseUrl = DEFAULT_AI_PROXY_BASE_URL))
+    }
+
     val aiAdviceRepository: AiAdviceRepository by lazy {
         DefaultAiAdviceRepository(proxyBaseUrl = DEFAULT_AI_PROXY_BASE_URL)
     }
@@ -141,5 +155,13 @@ class AppContainer(
             moodRecordDao = database.moodRecordDao(),
             cloudSyncRepositoryProvider = { cloudSyncRepository },
         )
+    }
+    suspend fun widgetSnapshot(): org.wit.vitasense.widget.WidgetSnapshot {
+        val summary = database.dailySummaryDao().getAllSorted().lastOrNull { it.rmssd != null }
+        val risk = database.riskAssessmentDao().getLatestOnce()?.takeIf { it.date == java.time.LocalDate.now().toString() }
+        val sleep = database.sleepRecordDao().getAllActiveForSync().maxByOrNull { it.date }
+        val mood = database.moodRecordDao().getAllForSync().filter { it.deletedAt == null }.maxWithOrNull(compareBy({ it.date }, { it.createdAt }))
+        return org.wit.vitasense.widget.WidgetSnapshot(risk?.totalScore,sleep?.durationMinutes,summary?.rmssd,mood?.moodType,
+            "Sleep ${sleep?.date ?: "—"}; HRV ${summary?.date ?: "—"}; mood ${mood?.date ?: "—"}")
     }
 }

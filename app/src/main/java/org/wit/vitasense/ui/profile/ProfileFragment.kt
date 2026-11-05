@@ -40,6 +40,8 @@ class ProfileFragment : Fragment() {
     ) {
         super.onViewCreated(view, savedInstanceState)
 
+        binding.remindersButton.setOnClickListener { findNavController().navigate(R.id.remindersFragment) }
+        binding.weeklyReportsButton.setOnClickListener { findNavController().navigate(R.id.weeklyReportsFragment) }
         binding.profileSignInButton.setOnClickListener {
             findNavController().navigate(R.id.authFragment)
         }

@@ -24,3 +24,35 @@ local.properties
 /python_auth_api/__pycache__/
 /python_auth_api/auth.db
 *.pyc
+
+.pytest_cache/
+
+# Local credentials, signing material, databases and Python environments
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.pem
+*.key
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.sqlite-*
+.venv/
+venv/
+env/
+__pypackages__/
+
+# Generated packages and temporary files
+**/build/
+*.apk
+*.aab
+*.apks
+*.log
+*.tmp
+*.bak
+*~

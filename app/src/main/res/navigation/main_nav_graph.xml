@@ -53,4 +53,8 @@
         android:id="@+id/aiChatFragment"
         android:name="org.wit.vitasense.ui.aichat.AiChatFragment"
         android:label="@string/ai_chat_title" />
+    <fragment android:id="@+id/healthInsightsFragment" android:name="org.wit.vitasense.ui.insights.HealthInsightsFragment" android:label="AI Health Insights" />
+    <fragment android:id="@+id/familySafetyFragment" android:name="org.wit.vitasense.ui.family.FamilySafetyFragment" android:label="Family Support &amp; Trusted Contacts" />
+    <fragment android:id="@+id/weeklyReportsFragment" android:name="org.wit.vitasense.ui.reports.WeeklyReportsFragment" android:label="Weekly Reports" />
+    <fragment android:id="@+id/remindersFragment" android:name="org.wit.vitasense.ui.reminders.RemindersFragment" android:label="Reminders &amp; Widget" />
 </navigation>

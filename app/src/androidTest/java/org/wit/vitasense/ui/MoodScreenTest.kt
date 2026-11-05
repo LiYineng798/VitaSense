@@ -40,15 +40,15 @@ class MoodScreenTest {
         onView(withHint(R.string.mood_date_hint)).check(doesNotExist())
 
         onView(withId(R.id.recordDateInput)).perform(scrollTo(), click())
-        onView(withText("选择记录日期")).inRoot(isDialog()).check(matches(isDisplayed()))
+        onView(withText(R.string.mood_pick_record_date_title)).inRoot(isDialog()).check(matches(isDisplayed()))
         onView(withText(R.string.common_cancel)).inRoot(isDialog()).perform(click())
 
         onView(withId(R.id.filterStartDateInput)).perform(scrollTo(), click())
-        onView(withText("选择开始日期")).inRoot(isDialog()).check(matches(isDisplayed()))
+        onView(withText(R.string.mood_pick_start_date_title)).inRoot(isDialog()).check(matches(isDisplayed()))
         onView(withText(R.string.common_cancel)).inRoot(isDialog()).perform(click())
 
         onView(withId(R.id.filterEndDateInput)).perform(scrollTo(), click())
-        onView(withText("选择结束日期")).inRoot(isDialog()).check(matches(isDisplayed()))
+        onView(withText(R.string.mood_pick_end_date_title)).inRoot(isDialog()).check(matches(isDisplayed()))
         onView(withText(R.string.common_cancel)).inRoot(isDialog()).perform(click())
     }
 
@@ -75,7 +75,8 @@ class MoodScreenTest {
                 withId(R.id.deleteButton),
                 isDescendantOfA(hasDescendant(withText(note))),
             ),
-        ).perform(scrollTo(), click())
+        ).perform(scrollTo())
+        onView(allOf(withId(R.id.deleteButton), isDescendantOfA(hasDescendant(withText(note))))).perform(click())
         onView(withText(R.string.common_delete)).inRoot(isDialog()).perform(click())
 
         onView(withText(note)).check(doesNotExist())

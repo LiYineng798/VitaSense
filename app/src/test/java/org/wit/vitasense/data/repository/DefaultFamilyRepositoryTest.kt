@@ -231,6 +231,7 @@ class DefaultFamilyRepositoryTest {
                 )
 
             repository.refreshFamily()
+            Unit
         }
 
     private fun familyEnvelope(): String =

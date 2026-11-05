@@ -353,9 +353,9 @@ class FamilyViewModelTest {
             yield()
 
             assertEquals("2026-06-03", moodRepository.latestMoodDate)
-            assertEquals(20, familyRepository.lastStatusFamilyId)
+            assertEquals(20L, familyRepository.lastStatusFamilyId)
             assertEquals("CALM", familyRepository.lastStatusSnapshot?.moodType)
-            assertEquals("steady", familyRepository.lastStatusSnapshot?.moodNote)
+            org.junit.Assert.assertNull(familyRepository.lastStatusSnapshot?.moodNote)
             assertEquals("Checked in today", familyRepository.lastStatusSnapshot?.statusLabel)
 
             collector.cancel()
@@ -400,7 +400,7 @@ class FamilyViewModelTest {
             yield()
 
             assertEquals("HAPPY", familyRepository.lastStatusSnapshot?.moodType)
-            assertEquals("better", familyRepository.lastStatusSnapshot?.moodNote)
+            org.junit.Assert.assertNull(familyRepository.lastStatusSnapshot?.moodNote)
 
             collector.cancel()
             scope.coroutineContext[Job]?.cancel()

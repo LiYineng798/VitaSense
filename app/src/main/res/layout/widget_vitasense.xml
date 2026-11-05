@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/widgetRoot" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="16dp" android:background="@android:color/background_light">
+    <TextView android:id="@+id/widgetBrand" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="VitaSense" android:textSize="20sp" android:textStyle="bold" android:contentDescription="Open VitaSense" />
+    <TextView android:id="@+id/widgetDetails" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:text="Loading…" android:textSize="13sp" />
+    <TextView android:id="@+id/widgetUpdated" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Tap to open" android:textSize="11sp" />
+    <TextView android:id="@+id/widgetRefresh" android:layout_width="match_parent" android:layout_height="48dp" android:gravity="center_vertical" android:text="Refresh" android:contentDescription="Refresh VitaSense widget" android:textStyle="bold" />
+</LinearLayout>

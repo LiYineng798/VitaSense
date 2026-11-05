@@ -90,8 +90,11 @@ class DefaultFamilyRepository(
             path = "/api/v1/families/$familyId/status",
             body =
                 JSONObject()
-                    .put("mood_type", snapshot.moodType)
-                    .put("mood_note", snapshot.moodNote)
+                    .put("mood_type", if (snapshot.shareMood) snapshot.moodType else JSONObject.NULL)
+                    .put("mood_note", JSONObject.NULL)
+                    .put("share_mood", snapshot.shareMood)
+                    .put("share_check_in", snapshot.shareCheckIn)
+                    .put("check_in", snapshot.checkIn)
                     .put("status_label", snapshot.statusLabel)
                     .put("updated_at", snapshot.updatedAt)
                     .put("share_health_score", snapshot.shareHealthScore)
@@ -115,6 +118,18 @@ class DefaultFamilyRepository(
                     .put("support_type", type.storageKey)
                     .toString(),
         )
+
+    override suspend fun checkInHistory(familyId: Long): List<String> = withContext(Dispatchers.IO) {
+        val token = tokenProvider().trim()
+        require(token.isNotBlank()) { "Sign in to view history." }
+        val response = request("GET", baseUrlProvider().trim().removeSuffix("/") + "/api/v1/families/$familyId/check-ins", token, null)
+        check(response.statusCode in 200..299) { "Unable to load check-in history." }
+        val rows = JSONObject(response.body).getJSONArray("check_ins")
+        (0 until rows.length()).map { index -> val r = rows.getJSONObject(index)
+            val time = java.time.Instant.ofEpochMilli(r.getLong("created_at")).atZone(java.time.ZoneId.systemDefault())
+            "${r.getString("full_name")}: ${if (r.getString("check_in") == "ok") "I'm OK" else "I Need Support"} — ${time.toLocalDate()} ${time.toLocalTime().withNano(0)}"
+        }
+    }
 
     private suspend fun execute(
         method: String,

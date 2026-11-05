@@ -31,6 +31,6 @@ class FloatingBottomTabNavigationTest {
         onView(withText(R.string.mood_title)).check(matches(isDisplayed()))
 
         onView(withId(R.id.tabProfile)).perform(click())
-        onView(withText(R.string.profile_title)).check(matches(isDisplayed()))
+        onView(withId(R.id.profileTitleText)).check(matches(isDisplayed()))
     }
 }

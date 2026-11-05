@@ -1,6 +1,7 @@
 package org.wit.vitasense.ui
 
 import android.util.TypedValue
+import kotlin.math.roundToInt
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
@@ -73,7 +74,7 @@ class MainActivitySmokeTest {
                 assertEquals(dp(activity, 20), includeParams.marginStart)
                 assertEquals(dp(activity, 20), includeParams.marginEnd)
                 assertEquals(dp(activity, 16), includeParams.bottomMargin)
-                assertEquals(ViewGroup.LayoutParams.MATCH_PARENT, card.layoutParams.width)
+                assertEquals(ConstraintLayout.LayoutParams.MATCH_CONSTRAINT, card.layoutParams.width)
                 assertEquals(ViewGroup.LayoutParams.MATCH_PARENT, board.layoutParams.width)
                 assertEquals(ViewGroup.LayoutParams.MATCH_PARENT, foreground.layoutParams.width)
                 assertEquals(0, navHost.paddingBottom)
@@ -104,5 +105,5 @@ class MainActivitySmokeTest {
     }
 
     private fun dp(activity: MainActivity, value: Int): Int =
-        (value * activity.resources.displayMetrics.density).toInt()
+        (value * activity.resources.displayMetrics.density).roundToInt()
 }

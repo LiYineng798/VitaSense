@@ -26,7 +26,7 @@ class SettingsImportTest {
         openSettings(scenario)
 
         onView(withText(R.string.settings_import_section)).check(matches(isDisplayed()))
-        onView(withText("平稳样本")).check(matches(isDisplayed()))
+        onView(withText("Stable Sample")).check(matches(isDisplayed()))
         onView(withText(R.string.settings_data_section)).perform(scrollTo()).check(matches(isDisplayed()))
         onView(withText(R.string.settings_privacy_section)).perform(scrollTo()).check(matches(isDisplayed()))
     }
@@ -37,9 +37,9 @@ class SettingsImportTest {
 
         openSettings(scenario)
 
-        onView(withText("删除所有数据")).perform(scrollTo()).check(matches(isDisplayed())).perform(click())
-        onView(withText("删除所有数据")).check(matches(isDisplayed()))
-        onView(withText("确认删除所有本地数据吗？")).check(matches(isDisplayed()))
+        onView(withText(R.string.settings_clear_all_data)).perform(scrollTo()).check(matches(isDisplayed())).perform(click())
+        onView(withText(R.string.settings_clear_all_data)).inRoot(androidx.test.espresso.matcher.RootMatchers.isDialog()).check(matches(isDisplayed()))
+        onView(withText(R.string.settings_clear_all_message)).check(matches(isDisplayed()))
     }
 
     private fun openSettings(scenario: ActivityScenario<MainActivity>) {

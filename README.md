@@ -296,3 +296,49 @@ Targeted regression checks were also added for profile secondary-entry layout be
 - `docs/superpowers/` contains development specs and implementation plans generated during the build process.
 - `python_auth_api/README.md` contains service-specific quickstart notes.
 - `.gitignore` excludes local Gradle homes, Android temp homes, Python bytecode, and the local auth database so developer-machine artifacts do not get committed.
+
+## VitaSense 2.0 Features
+
+The existing Kotlin/XML/Fragment architecture, four bottom tabs and independent AI action are retained.
+
+- **Trends → AI Health Insights:** local Spearman analysis of sleep, HRV, heart rate, categorical mood and stored assessment/recovery data. Coefficients require at least ten paired days. Tied ranks, missing measurements and constant series are handled explicitly. A per-request consent dialog enables an optional explanation through the existing AI chat proxy and provider settings.
+- **Profile → Family → Family Support & Trusted Contacts:** manually entered contacts stay in Room, including permission confirmation and a primary emergency contact. Calls and messages open the system dialer/SMS app for review. Explicit “I'm OK” and “I Need Support” check-ins, recent history, and independent mood/assessment/check-in sharing switches extend the existing family APIs. Journal notes are excluded from Android family requests.
+- **Profile → Weekly Reports:** generate the latest seven calendar days, including today; compare the previous seven days only with at least three measured days in each period. Reports show coverage, missing values, metric charts, mood distribution, anomaly flags, local insights and optional consented AI insights. Save PDF through Android's document picker; share through a restricted FileProvider content URI.
+- **Profile → Reminders & Widget:** configure mood, sleep, weekly-report and family reminders with preferred local time, repeat days, descriptions and quiet hours. WorkManager persists unique inexact jobs and reschedules after time/time-zone changes and reboot. Add the native VitaSense widget from the launcher. **Show Health Details on Home Widget defaults to off.**
+
+### Data, Permissions and Deployment
+
+Room is version **6**. Explicit additive migrations **4 → 5 → 6** add `trusted_contacts` and `reminder_schedules`. The destructive migration fallback has been removed. Existing version-4 health, mood, settings, account and chat data are retained. Historical versions 1–3 need their original verified schema migrations; no destructive fallback is provided.
+
+The existing backend adds the SQLite `family_check_ins` table and authenticated `GET /api/v1/families/{family_id}/check-ins`. The existing status request accepts `share_mood`, `share_check_in` and optional `check_in` (`ok` or `needs_support`). Deploy the updated `python_auth_api/main.py` to enable history on a remote server; this implementation does not deploy production services.
+
+Explicit Android permissions added: `POST_NOTIFICATIONS` and `RECEIVE_BOOT_COMPLETED`. WorkManager supplies its standard merged-manifest infrastructure permissions. There are no contacts, direct-call, SMS, location, broad-storage or exact-alarm permissions. If notifications or their channel are disabled, the Reminders screen explains that saved schedules cannot deliver notifications. Quiet hours may defer delivery past midnight; Android battery policy may delay or skip a stale reminder.
+
+Trusted contacts, reminder schedules and widget preferences are not included in cloud sync. Android database cloud backup/device transfer is excluded to keep contacts and stored credentials local. Existing explicit cloud sync of supported source data and theme settings is unchanged. Family privacy switches publish revocations to the backend; offline changes require retrying **Publish sharing preferences**.
+
+New insight/report AI requests contain generated statistical summaries and category counts, never journal notes, contact details or raw samples. Consent is requested for each request. Local analysis remains usable without a provider or network. Existing AI Chat retains its separately documented behavior. These features are informational and do not diagnose, claim significance, or infer causation. “Recovery” in these modules is the existing stored assessment score, not a newly invented measurement.
+
+### Verification
+
+Use JDK 21, Android SDK 36.1 and the Gradle wrapper. Gradle installs missing SDK components when licenses permit.
+
+```bash
+./gradlew :app:testDebugUnitTest
+./gradlew :app:assembleDebug
+./gradlew :app:assembleDebugAndroidTest
+# Optional: connected device/emulator
+./gradlew :app:connectedDebugAndroidTest
+
+cd python_auth_api
+python -m pip install -r requirements-dev.txt
+python -m pytest -q
+python family_endpoints_test.py
+python sync_endpoints_test.py
+python sync_schema_test.py
+python ai_chat_stream_test.py
+python family_check_ins_test.py
+# With uvicorn main:app running locally on port 8000:
+python smoke_test.py
+```
+
+See [the architecture and manual test guide](docs/vitasense-2-implementation.md) and [the delivery file manifest and verification results](docs/vitasense-2-delivery.md).

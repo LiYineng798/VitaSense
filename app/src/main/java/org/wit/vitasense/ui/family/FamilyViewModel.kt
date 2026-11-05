@@ -188,7 +188,7 @@ class FamilyViewModel(
                 snapshot =
                     FamilyStatusSnapshot(
                         moodType = mood?.moodType,
-                        moodNote = mood?.note,
+                        moodNote = null,
                         statusLabel = if (mood == null) "No check-in yet" else "Checked in today",
                         updatedAt = System.currentTimeMillis(),
                         shareHealthScore = shareHealthScore,
@@ -256,7 +256,7 @@ class FamilyViewModel(
                 snapshot =
                     FamilyStatusSnapshot(
                         moodType = mood?.moodType,
-                        moodNote = mood?.note,
+                        moodNote = null,
                         statusLabel = if (mood == null) "No check-in yet" else "Checked in today",
                         updatedAt = System.currentTimeMillis(),
                         shareHealthScore = shareHealthScore,

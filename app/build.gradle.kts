@@ -30,6 +30,7 @@ android {
             )
         }
     }
+    testOptions { unitTests.isIncludeAndroidResources = true }
     buildFeatures {
         viewBinding = true
     }
@@ -40,6 +41,7 @@ android {
 }
 
 dependencies {
+    implementation("androidx.work:work-runtime-ktx:2.10.5")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
@@ -56,6 +58,8 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
     implementation(libs.json)
+    testImplementation("androidx.work:work-testing:2.10.5")
+    testImplementation("org.robolectric:robolectric:4.16.1")
     testImplementation(libs.junit)
     testImplementation(libs.json)
     androidTestImplementation(libs.androidx.test.core)

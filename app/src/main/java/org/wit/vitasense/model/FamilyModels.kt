@@ -67,6 +67,9 @@ data class FamilyStatusSnapshot(
     val healthScore: Int? = null,
     val healthScoreLabel: String? = null,
     val healthScoreUpdatedAt: Long? = null,
+    val shareMood: Boolean = false,
+    val shareCheckIn: Boolean = false,
+    val checkIn: String? = null,
 )
 
 data class FamilyHomeSummary(

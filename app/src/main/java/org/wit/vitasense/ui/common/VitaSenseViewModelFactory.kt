@@ -19,6 +19,18 @@ class VitaSenseViewModelFactory(
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T =
         when {
+            modelClass.isAssignableFrom(org.wit.vitasense.ui.reminders.RemindersViewModel::class.java) ->
+                org.wit.vitasense.ui.reminders.RemindersViewModel(appContainer.remindersRepository, appContainer.reminderScheduler) as T
+
+            modelClass.isAssignableFrom(org.wit.vitasense.ui.reports.WeeklyReportsViewModel::class.java) ->
+                org.wit.vitasense.ui.reports.WeeklyReportsViewModel(appContainer.weeklyReportsRepository) as T
+
+            modelClass.isAssignableFrom(org.wit.vitasense.ui.family.FamilySafetyViewModel::class.java) ->
+                org.wit.vitasense.ui.family.FamilySafetyViewModel(appContainer.familySafetyRepository) as T
+
+            modelClass.isAssignableFrom(org.wit.vitasense.ui.insights.HealthInsightsViewModel::class.java) ->
+                org.wit.vitasense.ui.insights.HealthInsightsViewModel(appContainer.healthInsightsRepository) as T
+
             modelClass.isAssignableFrom(DashboardViewModel::class.java) ->
                 DashboardViewModel(
                     healthRepository = appContainer.healthRepository,

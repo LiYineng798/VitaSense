@@ -9,11 +9,11 @@ import urllib.error
 import urllib.request
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import FastAPI, Header
 from fastapi.responses import JSONResponse, StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 APP_DIR = Path(__file__).resolve().parent
 DB_PATH = APP_DIR / "auth.db"
@@ -50,8 +50,11 @@ class FamilyRenameRequest(BaseModel):
 class FamilyStatusRequest(BaseModel):
     mood_type: str | None = None
     mood_note: str | None = None
-    status_label: str
+    status_label: str = Field(min_length=1, max_length=120)
     updated_at: int
+    share_mood: bool = True
+    share_check_in: bool = False
+    check_in: Literal["ok", "needs_support"] | None = None
     share_health_score: bool = False
     health_score: int | None = None
     health_score_label: str | None = None
@@ -205,6 +208,16 @@ def initialize_database() -> None:
                 PRIMARY KEY(family_id, user_id),
                 FOREIGN KEY(family_id, user_id) REFERENCES family_members(family_id, user_id) ON DELETE CASCADE
             );
+
+            CREATE TABLE IF NOT EXISTS family_check_ins (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                family_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL,
+                check_in TEXT NOT NULL CHECK(check_in IN ('ok', 'needs_support')),
+                created_at INTEGER NOT NULL,
+                FOREIGN KEY(family_id, user_id) REFERENCES family_members(family_id, user_id) ON DELETE CASCADE
+            );
+            CREATE INDEX IF NOT EXISTS index_family_check_ins_family_time ON family_check_ins(family_id, created_at);
 
             CREATE TABLE IF NOT EXISTS family_supports (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1294,9 +1307,9 @@ def update_family_status(family_id: int, payload: FamilyStatusRequest, authoriza
             (
                 family_id,
                 user_id,
-                payload.mood_type.strip() if payload.mood_type is not None else None,
-                payload.mood_note.strip() if payload.mood_note is not None else None,
-                payload.status_label.strip(),
+                payload.mood_type.strip() if payload.share_mood and payload.mood_type is not None else None,
+                payload.mood_note.strip() if payload.share_mood and payload.mood_note is not None else None,
+                (("I'm OK" if payload.check_in == "ok" else "I Need Support") if payload.share_check_in and payload.check_in else payload.status_label.strip()),
                 payload.updated_at,
                 share_health_score,
                 health_score,
@@ -1304,6 +1317,14 @@ def update_family_status(family_id: int, payload: FamilyStatusRequest, authoriza
                 health_score_updated_at,
             ),
         )
+        if not payload.share_check_in:
+            connection.execute("DELETE FROM family_check_ins WHERE family_id = ? AND user_id = ?", (family_id, user_id))
+        elif payload.check_in is not None:
+            # Server clock; clients cannot create backdated check-ins or impersonate another member.
+            now = int(time.time() * 1000)
+            latest = connection.execute("SELECT check_in, created_at FROM family_check_ins WHERE family_id = ? AND user_id = ? ORDER BY id DESC LIMIT 1", (family_id, user_id)).fetchone()
+            if latest is None or latest["check_in"] != payload.check_in or now - latest["created_at"] >= 60_000:
+                connection.execute("INSERT INTO family_check_ins(family_id, user_id, check_in, created_at) VALUES (?, ?, ?, ?)", (family_id, user_id, payload.check_in, now))
         body = family_response(connection, family_id, user_id, "Family status updated.")
         connection.commit()
 
@@ -1558,3 +1579,16 @@ def ai_chat_stream(payload: AiChatRequest):
     if validation_error is not None:
         return validation_error
     return StreamingResponse(stream_chat_completion(payload), media_type="text/event-stream")
+
+
+@app.get("/api/v1/families/{family_id}/check-ins")
+def family_check_in_history(family_id: int, authorization: str | None = Header(default=None)):
+    user_id = require_family_user(authorization)
+    if isinstance(user_id, JSONResponse):
+        return user_id
+    with get_connection() as connection:
+        membership = require_family_membership(connection, family_id, user_id)
+        if isinstance(membership, JSONResponse):
+            return membership
+        rows = connection.execute("SELECT c.id, c.user_id, u.full_name, c.check_in, c.created_at FROM family_check_ins c JOIN users u ON u.id = c.user_id WHERE c.family_id = ? ORDER BY c.id DESC LIMIT 100", (family_id,)).fetchall()
+        return {"success": True, "check_ins": [dict(row) for row in rows]}

@@ -197,4 +197,5 @@
 
     <string name="common_delete">Delete</string>
     <string name="common_cancel">Cancel</string>
+    <string name="widget_description">Private by default. Optionally show your latest local health details.</string>
 </resources>
